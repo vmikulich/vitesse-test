@@ -1,30 +1,35 @@
 import '@mdi/font/css/materialdesignicons.css'
-import { createVuetify, ThemeDefinition } from 'vuetify'
-import * as components from 'vuetify/lib/components/index.mjs'
-import * as directives from 'vuetify/lib/directives/index.mjs'
+import { createVuetify } from 'vuetify'
+import { ThemeDefinition } from 'vuetify/composables'
 import 'vuetify/styles'
 import { UserModule } from '~/types'
 
-const myCustomLightTheme: ThemeDefinition = {
+const appLightTheme: ThemeDefinition = {
   dark: false,
   colors: {
-    background: '#FFFFFF',
-    surface: '#FFFFFF',
-    primary: '#6200EE',
+    'background': '#FFFFFF',
+    'surface': '#FFFFFF',
+    'primary': '#6200EE',
     'primary-darken-1': '#3700B3',
-    secondary: '#03DAC6',
+    'secondary': '#03DAC6',
     'secondary-darken-1': '#018786',
-    error: '#B00020',
-    info: '#2196F3',
-    success: '#4CAF50',
-    warning: '#FB8C00',
+    'error': '#B00020',
+    'info': '#2196F3',
+    'success': '#4CAF50',
+    'warning': '#FB8C00',
   },
+  variables: {},
 }
 
 export const install: UserModule = ({ app }) => {
   const vuetify = createVuetify({
-    components,
-    directives,
+    theme: {
+      defaultTheme: 'appLightTheme',
+      themes: {
+        appLightTheme,
+      },
+    },
   })
+
   app.use(vuetify)
 }
