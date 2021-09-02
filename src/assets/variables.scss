@@ -1,0 +1,190 @@
+// Ref: https://github.com/nuxt-community/vuetify-module#customvariables
+//
+// The variables you want to modify
+$color-pack: false;
+$font-size-root: 16px;
+$body-font-family: -apple-system, 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica',
+  'Arial', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+$border-radius-root: 8px;
+$btn-font-weight: 600;
+$btn-text-transform: none;
+$btn-letter-spacing: 0;
+$btn-transition-duration: 0.28s;
+$btn-font-sizes: (
+  'x-small': 0.75rem,
+  'default': 0.75rem,
+  'large': 0.75rem,
+);
+
+$headings: (
+  'body-1': (
+    'letter-spacing': 0,
+  ),
+  'body-2': (
+    'letter-spacing': 0,
+  ),
+  'caption': (
+    'letter-spacing': 0,
+  ),
+);
+
+$dialog-card-subtitle-padding: 0 32px 24px !default;
+$dialog-card-actions-padding: 10px 32px 32px !default;
+$dialog-card-text-padding: 0 32px 24px !default;
+$dialog-card-title-padding: 24px 16px 20px 32px !default;
+
+$shades: (
+  (
+    'black': #0b132a,
+    'white': #fff,
+    'transparent': transparent,
+  )
+);
+
+$text-field-details-min-height: 10px;
+$input-slot-margin-bottom: 4px;
+$messages-font-size: 10px;
+$messages-min-height: 12px;
+$text-field-outlined-fieldset-border: 1px solid currentColor;
+
+$material-light: (
+  'status-bar': (
+    'regular': #e9ebf5,
+    // 'lights-out': rgba(map-get($shades, 'white'), 0.7),
+  ),
+  'app-bar': map-get($shades, 'white'),
+  'background': #f6f7fb,
+  // 'bottom-navigation': map-get($shades, 'white'),
+  // 'surface': map-get($shades, 'white'),
+  // 'calendar': (
+  //   'background-color': map-get($shades, 'white'),
+  //   'outside-background-color': #f7f7f7,
+  //   'weeknumber-background-color': #f1f3f4,
+  //   'line-color': map-get($grey, 'lighten-2'),
+  //   'interval-color': map-get($grey, 'darken-3'),
+  //   'interval-line-color': map-get($grey, 'lighten-2'),
+  //   'text-color': map-get($shades, 'black'),
+  //   'past-color': rgba(map-get($shades, 'black'), 0.38),
+  // ),
+  // 'chips': #e0e0e0,
+  // 'code': (
+  //   'background': rgba(map-get($shades, 'black'), 0.05),
+  //   'color': currentColor,
+  // ),
+  // 'kbd': (
+  //   'background': #212529,
+  //   'color': map-get($shades, 'white'),
+  // ),
+  'dividers': #e8eff9,
+  'text': (
+    // 'theme': map-get($shades, 'white'),
+    'primary': #0b132a,
+    'secondary': #838daa,
+    'disabled': rgba(map-get($shades, 'black'), 0.38),
+    // 'link': map-get($blue, 'darken-2'),
+    // 'link-hover': map-get($grey, 'darken-3'),,,,,,,
+  ),
+  // 'icons': (
+  //   'active': rgba(map-get($shades, 'black'), 0.54),
+  //   'inactive': rgba(map-get($shades, 'black'), 0.38),
+  // ),
+  // 'inputs':(
+  // 'box': #838daa,
+  // 'solo-inverted': rgba(map-get($shades, 'black'), 0.06),
+  // 'solo-inverted-focused': map-get($grey, 'darken-3'),
+  // 'solo-inverted-focused-label': rgba(map-get($shades, 'white'), 0.7),
+  // 'solo-inverted-focused-placeholder': rgba(map-get($shades, 'white'), 0.5),
+  // 'solo-inverted-focused-text': map-get($shades, 'white'),
+  // ),
+  'buttons':
+    (
+      'disabled': #0c2a5c,
+      'focused': #e9eff9,
+      // 'focused-alt': rgba(map-get($shades, 'white'), 0.6),
+      // 'pressed': rgba(#999, 0.4),,,,,,,,,
+    ),
+  // 'expansion-panels': (
+  //   'focus': map-get($grey, 'lighten-3'),
+  // ),
+  // 'navigation-drawer': map-get($shades, 'white'),
+  // 'selection-controls': (
+  //   'disabled': rgba(map-get($shades, 'black'), 0.26),
+  //   'thumb': (
+  //     'inactive': map-get($shades, 'white'),
+  //     'disabled': map-get($grey, 'lighten-5'),
+  //   ),
+  //   'track': (
+  //     'inactive': rgba(map-get($shades, 'black'), 0.38),
+  //     'disabled': rgba(map-get($shades, 'black'), 0.12),
+  //   ),
+  // ),
+  // 'slider': (
+  //   'active': rgba(map-get($shades, 'black'), 0.38),
+  //   'inactive': rgba(map-get($shades, 'black'), 0.26),
+  //   'disabled': rgba(map-get($shades, 'black'), 0.26),
+  //   'discrete': map-get($shades, 'black'),
+  // ),
+  // 'skeleton':
+  //   linear-gradient(
+  //     90deg,
+  //     rgba(255, 255, 255, 0),
+  //     rgba(255, 255, 255, 0.3),
+  //     rgba(255, 255, 255, 0)
+  //   ),
+  'states':
+    (
+      // 'hover': 0.04,
+      // 'focus': 0.12,
+      // 'selected': 0.08,
+      'activated': 0.04,
+      // 'pressed': 0.16,
+      // 'dragged': 0.08,,,
+    ),
+  // 'tabs': rgba(0, 0, 0, 0.54),
+  // 'toggle-buttons': (
+  //   'color': map-get($shades, 'black'),
+  // ),
+  'text-fields':
+    (
+      // 'filled': rgba(map-get($shades, 'black'), 0.06),
+      // 'filled-hover': rgba(map-get($shades, 'black'), 0.12),
+      'outlined': #838daa,
+      'outlined-disabled': lighten(#838daa, 0.26),
+      'outlined-hover': darken(#838daa, 0.86),
+    ),
+  'toolbar': #e9ebf5,
+  // 'input-bottom-line': rgba(map-get($shades, 'black'), 0.42),
+  // 'stepper': (
+  //   'active': rgba(map-get($shades, 'white'), 1),
+  //   'completed': rgba(map-get($shades, 'black'), 0.87),
+  //   'hover': rgba(map-get($shades, 'black'), 0.54),
+  // ),
+  'table':
+    (
+      'active': #e9eff9,
+      'hover': #e9eff9,
+      'group': #e9eff9,
+    ),
+  // 'picker': (
+  //   'body': map-get($shades, 'white'),
+  //   'clock': map-get($grey, 'lighten-2'),
+  //   'indeterminateTime': map-get($grey, 'lighten-1'),
+  //   'title': map-get($grey, 'lighten-2'),
+  // ),
+  // 'color-picker': (
+  //   'checkerboard': rgba(map-get($shades, 'white'), 0),
+  // ),
+  // 'bg-color': map-get($shades, 'white'),
+  // 'fg-color': map-get($shades, 'black'),
+  // 'text-color': map-get($shades, 'black'),
+  // 'primary-text-percent': 0.87,
+  // 'secondary-text-percent': 0.6,
+  // 'disabledORhints-text-percent': 0.38,
+  // 'divider-percent': 0.12,
+  // 'active-icon-percent': 0.54,
+  // 'inactive-icon-percent': 0.38,,,,,,,
+);
+
+$breadcrumbs-padding: 0;
+$breadcrumbs-even-child-padding: 0;
+$breadcrumbs-item-font-size: 12px;
