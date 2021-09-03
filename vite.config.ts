@@ -11,6 +11,7 @@ import Markdown from 'vite-plugin-md'
 import { VitePWA } from 'vite-plugin-pwa'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
+import Vuetify from '@vuetify/vite-plugin'
 
 const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
 
@@ -24,6 +25,8 @@ export default defineConfig({
     Vue({
       include: [/\.vue$/, /\.md$/],
     }),
+
+    Vuetify({ styles: 'expose' }),
 
     // https://github.com/hannoeru/vite-plugin-pages
     Pages({
@@ -114,7 +117,6 @@ export default defineConfig({
         ],
       },
     }),
-
   ],
 
   server: {
