@@ -7,12 +7,13 @@
     "preview-https": "serve dist"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^1.17.0",
     "@mdi/font": "^5.9.55",
     "@vuetify/vite-plugin": "1.0.0-alpha.2",
     "@vueuse/core": "^6.0.0",
     "@vueuse/head": "^0.5.1",
+    "axios": "^0.21.1",
     "nprogress": "^0.2.0",
-    "pinia": "^2.0.0-rc.6",
     "prism-theme-vars": "^0.2.2",
     "sass": "^1.39.0",
     "sass-loader": "^12.1.0",
@@ -22,7 +23,8 @@
     "vue-i18n": "^9.1.7",
     "vue-router": "^4.0.11",
     "vuetify": "^3.0.0-alpha.11",
-    "vuetify-loader": "^2.0.0-alpha.2"
+    "vuetify-loader": "^2.0.0-alpha.2",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.7.0",

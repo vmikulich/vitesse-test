@@ -1,0 +1,149 @@
+image: docker:stable
+
+stages:
+  - test
+  - build
+  - pack
+  - deploy
+
+variables:
+  APP_VER: "0.0"
+  DOCKER_IMAGE_NAME: dev-helios/web
+  DOCKER_FILE: docker/Dockerfile
+  CHART_NAME: web
+  CHART_PATH: ./chart
+
+build-image-qa:
+  stage: build
+  tags: [ docker ]
+  services: [ 'docker:dind' ]
+#TODO: remove env from build ------------
+  environment:
+    name: qa
+  variables:
+    DOCKER_IMAGE_NAME: dev-helios/web-qa
+# ---------------------------------------
+  script:
+    - DOCKER_BUILD_TAG=${APP_VER}.${CI_PIPELINE_IID}
+    - if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then DOCKER_BUILD_TAG=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    - DATE_MARKER=`date +"%d-%b-%Y %H:%M"`
+    - echo Docker images will be marked with tags latest and $DOCKER_BUILD_TAG
+    - echo UI will be marked as $DOCKER_BUILD_TAG  $DATE_MARKER
+    - docker login --username $DOCKER_USER --password $DOCKER_PWD $DOCKER_REG
+    - docker build
+      --build-arg environment=$CI_ENVIRONMENT_NAME
+      --build-arg "BUILD_VER=$DOCKER_BUILD_TAG  $DATE_MARKER"
+      -t $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+      -f $DOCKER_FILE .    
+    - docker push $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+  only:
+    refs:
+      - develop
+
+build-image-stage:
+  stage: build
+  tags: [ docker ]
+  services: [ 'docker:dind' ]
+#TODO: remove env from build ------------
+  environment:
+    name: stage
+  variables:
+    DOCKER_IMAGE_NAME: dev-helios/web-stage
+# ---------------------------------------
+  script:
+    - DOCKER_BUILD_TAG=${APP_VER}.${CI_PIPELINE_IID}
+    - if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then DOCKER_BUILD_TAG=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    - DATE_MARKER=`date +"%d-%b-%Y %H:%M"`
+    - echo Docker images will be marked with tags latest and $DOCKER_BUILD_TAG
+    - echo UI will be marked as $DOCKER_BUILD_TAG  $DATE_MARKER
+    - docker login --username $DOCKER_USER --password $DOCKER_PWD $DOCKER_REG
+    - docker build
+      --build-arg environment=$CI_ENVIRONMENT_NAME
+      --build-arg "BUILD_VER=$DOCKER_BUILD_TAG  $DATE_MARKER"
+      -t $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+      -f $DOCKER_FILE .    
+    - docker push $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+  only:
+    refs:
+      - tags
+
+build-image-prod:
+  stage: build
+  tags: [ docker ]
+  services: [ 'docker:dind' ]
+#TODO: remove env from build ------------
+  environment:
+    name: prod
+  variables:
+    DOCKER_IMAGE_NAME: dev-helios/web-prod
+# ---------------------------------------
+  script:
+    - DOCKER_BUILD_TAG=${APP_VER}.${CI_PIPELINE_IID}
+    - if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then DOCKER_BUILD_TAG=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    - DATE_MARKER=`date +"%d-%b-%Y %H:%M"`
+    - echo Docker images will be marked with tags latest and $DOCKER_BUILD_TAG
+    - echo UI will be marked as $DOCKER_BUILD_TAG  $DATE_MARKER
+    - docker login --username $DOCKER_USER --password $DOCKER_PWD $DOCKER_REG
+    - docker build
+      --build-arg environment=$CI_ENVIRONMENT_NAME
+      --build-arg "BUILD_VER=$DOCKER_BUILD_TAG  $DATE_MARKER"
+      -t $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+      -f $DOCKER_FILE .    
+    - docker push $DOCKER_REG/$DOCKER_IMAGE_NAME:$DOCKER_BUILD_TAG
+  only:
+    refs:
+      - tags
+
+
+build-chart:
+  stage: pack
+  tags: [ docker ]
+  image: devth/helm:v3.5.4
+  script: | 
+    CHART_VERSION=${APP_VER}.${CI_PIPELINE_IID}
+    DOCKER_BUILD_TAG=${APP_VER}.${CI_PIPELINE_IID}    
+    if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then DOCKER_BUILD_TAG=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    echo Chart version will be set to $CHART_VERSION
+    helm repo add $HELM_REPO_NAME $HELM_REPO_URL --username $HELM_USER --password $HELM_PWD
+    helm repo update
+    SED_CMD="s/  tag: \"latest\"/  tag: \"$DOCKER_BUILD_TAG\"/g"
+    sed -i "$SED_CMD" ${CHART_PATH}/values.yaml
+    helm package --app-version $CHART_VERSION --version $CHART_VERSION $CHART_PATH
+    helm plugin install https://github.com/chartmuseum/helm-push.git
+    helm push ${CHART_NAME}-${CHART_VERSION}.tgz $HELM_REPO_NAME
+  only:
+    refs:
+      - tags
+      - develop
+
+.deploy-script: &deploy-script
+  script: |
+    CHART_VERSION=${APP_VER}.${CI_PIPELINE_IID}
+    if [ $(echo $CI_COMMIT_TAG | cut -c 2-) ] ; then CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -c 2-) ; fi;
+    kubectl -n ${KUBE_NAMESPACE} delete secret regcred --ignore-not-found
+    kubectl -n ${KUBE_NAMESPACE} create secret docker-registry regcred --docker-server=$DOCKER_REG --docker-username=$DOCKER_USER --docker-password=$DOCKER_PWD --docker-email=admin@diabatix.com
+    helm repo add $HELM_REPO_NAME $HELM_REPO_URL --username $HELM_USER --password $HELM_PWD
+    helm repo update
+    echo helm upgrade -i ${CHART_NAME} ${HELM_REPO_NAME}/${CHART_NAME} --version ${CHART_VERSION} --namespace ${KUBE_NAMESPACE} 
+    helm upgrade -i ${CHART_NAME} ${HELM_REPO_NAME}/${CHART_NAME} --version ${CHART_VERSION} --namespace ${KUBE_NAMESPACE} -f $CHART_VALUES --set-file envJsonFileContent=./${CI_ENVIRONMENT_SLUG}.env.json  
+
+deploy-qa:
+  stage: deploy
+  image: devth/helm:v3.5.4
+  tags: [ docker ] 
+  environment: qa
+  <<: *deploy-script  
+  only:
+    refs:
+      - develop
+
+deploy-stage:
+  stage: deploy
+  image: devth/helm:v3.5.4
+  tags: [ docker ] 
+  environment: stage
+  <<: *deploy-script  
+  only:
+    refs:
+      - tags
