@@ -8,7 +8,7 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 onMounted(async() => {
-  store.dispatch('auth/login')
+  await store.dispatch('auth/login')
 })
 </script>
 

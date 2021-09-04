@@ -1,6 +1,7 @@
 import { createStore } from 'vuex'
 
 import { authModule } from './auth'
+import { userModule } from './user'
 
 export type RootState = {
   version: string
@@ -21,6 +22,7 @@ const store = createStore({
 
   modules: {
     auth: authModule,
+    user: userModule,
   },
 })
 

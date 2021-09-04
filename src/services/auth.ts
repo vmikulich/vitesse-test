@@ -14,9 +14,14 @@ export default async() => {
     domain: config.auth0Endpoint,
     audience: config.auth0Audience,
     client_id: config.auth0ClientId,
+    responce_type: 'code',
+    redirect_uri: 'http://localhost:3000/auth',
   })
+
+  const isAuthenticated = await authClient.isAuthenticated()
 
   return {
     authClient,
+    isAuthenticated,
   }
 }

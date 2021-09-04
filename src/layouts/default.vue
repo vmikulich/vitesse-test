@@ -6,3 +6,23 @@
     </div>
   </main>
 </template>
+
+<script setup lang="ts">
+import { useStore } from 'vuex'
+
+const store = useStore()
+
+const token = localStorage.getItem('auth0_token')
+console.log(token)
+
+store.dispatch('auth/isAuthenticated', token)
+
+const test = ref(store.getters['auth/isGranted'])
+console.log(test)
+
+watch(test, (newVal, oldVal) => {
+  console.log('eee')
+  if (newVal) store.dispatch('user/fetchUser')
+})
+
+</script>

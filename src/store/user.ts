@@ -1,34 +1,38 @@
-import { acceptHMRUpdate, defineStore } from 'pinia'
 
-export const useUserStore = defineStore('user', () => {
-  /**
-   * Current named of the user.
-   */
-  const savedUser = ref(null)
+import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
+import { RootState } from './index'
+import axios from 'axios'
 
-  const authenticated = ref(false)
+export interface UserState {
+  user: object|null
+}
 
-  /**
-   * Changes the current name of the user and saves the one that was used
-   * before.
-   *
-   * @param name - new name to set
-   */
-  function setUser(user) {
-    savedUser.value = user
-  }
+export const state: UserState = {
+  user: null,
+}
 
-  function setAuthenticated(status: boolean) {
-    authenticated.value = status
-  }
+const mutations: MutationTree<UserState> = {
+  setUser(state, payload: object) {
+    state.user = payload
+  },
+}
 
-  return {
-    setUser,
-    authenticated,
-    savedUser,
-    setAuthenticated,
-  }
-})
+const actions: ActionTree<UserState, RootState> = {
+  async fetchUser({ commit }) {
+    const user = await axios.get('https://identity.helios-dev-31eb55898dce18f48a3d0ededaf43128-0000.eu-de.containers.appdomain.cloud/users/me')
+    console.log(user)
+    commit('setUser', user.data)
+  },
+}
 
-if (import.meta.hot)
-  import.meta.hot.accept(acceptHMRUpdate(useUserStore, import.meta.hot))
+const getters: GetterTree<UserState, RootState> = {}
+
+const namespaced = true
+
+export const userModule: Module<UserState, RootState> = {
+  namespaced,
+  state,
+  mutations,
+  actions,
+  getters,
+}
