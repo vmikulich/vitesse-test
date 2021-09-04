@@ -1,10 +1,19 @@
 <template>
   <p>Signing in...</p>
 </template>
-<script>
+
+<script setup lang="ts">
+import { useStore } from 'vuex'
+
+const store = useStore()
+
+onMounted(async() => {
+  store.dispatch('auth/login')
+})
+</script>
+
+<script lang="ts">
 export default {
-  auth: 'guest',
   layout: 'empty',
-  middleware: ({ $auth }) => $auth.loginWith('auth0'),
 }
 </script>
