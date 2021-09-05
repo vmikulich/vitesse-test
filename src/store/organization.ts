@@ -1,11 +1,13 @@
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
-import useAuthService from './../services/auth'
-import { RootState } from './index'
 import axios from 'axios'
+import { RootState } from './index'
+import organizationService from '~/services/organization'
+export interface OrganizationState {
+  organizationId: number|''|null
+  profile: object|null
+}
 
-const { authClient } = await useAuthService()
-
-const getDefaultState = (): AuthState => {
+const getDefaultState = (): OrganizationState => {
   const organizationId = localStorage.getItem('organizationId')
 
   return {
@@ -14,14 +16,9 @@ const getDefaultState = (): AuthState => {
   }
 }
 
-export interface AuthState {
-  organizationId: number|''|null
-  profile: object|null
-}
+export const state = (): OrganizationState => getDefaultState()
 
-export const state: AuthState = () => getDefaultState()
-
-const mutations: MutationTree<AuthState> = {
+const mutations: MutationTree<OrganizationState> = {
   setOrganization(state, payload) {
     if (payload.organizationId) {
       localStorage.setItem('organizationId', payload.organizationId)
@@ -37,31 +34,33 @@ const mutations: MutationTree<AuthState> = {
   },
 }
 
-const actions: ActionTree<AuthState, RootState> = {
+const actions: ActionTree<OrganizationState, RootState> = {
   async setOrganization({ commit }, payload) {
-    await commit('setOrganization', payload)
+    commit('setOrganization', payload)
     if (!payload.skipUpdate) {
       await commit('getOrganizationProfile')
     }
   },
-  async getOrganizationProfile({ getters, commit }) {
-    const response = await axios.get(
-      `https://organization.helios-dev-31eb55898dce18f48a3d0ededaf43128-0000.eu-de.containers.appdomain.cloud/organizations/${getters.organizationId}`,
-    )
+  async fetchOrganizationProfile({ commit }, payload: number) {
+    const response = await organizationService.fetch(axios, payload)
 
-    return commit('setProfile', response.data)
+    commit('setProfile', response.data)
   },
 }
 
-const getters: GetterTree<AuthState, RootState> = {
-  organizationId(state, _getters, rootState) {
-    return state.organizationId || rootState.auth.user.organizationId
+const getters: GetterTree<OrganizationState, RootState> = {
+  organizationId(state) {
+    return state.organizationId
+  },
+
+  organization(state) {
+    return state.profile
   },
 }
 
 const namespaced = true
 
-export const authModule: Module<AuthState, RootState> = {
+export const organizationModule: Module<OrganizationState, RootState> = {
   namespaced,
   state,
   mutations,

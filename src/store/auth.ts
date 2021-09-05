@@ -4,7 +4,7 @@ import useAuthService from './../services/auth'
 import { RootState } from './index'
 import axios from 'axios'
 
-const { authClient, isAuthenticated } = await useAuthService()
+const { authClient } = await useAuthService()
 
 export interface AuthState {
   isGranted: boolean
@@ -30,28 +30,20 @@ const actions: ActionTree<AuthState, RootState> = {
   logout(): void {
     authClient.logout()
     delete axios.defaults.headers.common.Authorization
-    localStorage.removeItem('auth0_token')
   },
 
   async isAuthenticated({ commit }, token) {
     const isAuth: boolean = await authClient.isAuthenticated()
-    console.log(isAuth)
     if (isAuth) {
       commit('setCharList', isAuth)
       axios.defaults.headers.common.Authorization = `Bearer ${token}`
-      localStorage.setItem('auth0_token', token)
-    } else {
-      localStorage.removeItem('auth0_token')
     }
-    console.log('sdfasdf')
   },
 
   async handleRedirect({ dispatch }): Promise<void> {
     await authClient.handleRedirectCallback()
     const token = await authClient.getTokenSilently()
-    console.log('dsfas')
     dispatch('isAuthenticated', token)
-    localStorage.setItem('auth0_token', token)
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
   },
 }

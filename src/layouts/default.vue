@@ -1,10 +1,143 @@
 <template>
-  <main class="px-4 py-10 text-center text-gray-700 dark:text-gray-200">
-    <router-view />
-    <div class="mt-5 mx-auto text-center opacity-25 text-sm text--secondary">
-      [Default Layout]
-    </div>
-  </main>
+  <v-app>
+    <!-- <TermsOfUse
+      v-if="acceptWindowStatus"
+      :user-terms-status="isTermsOfUseAccepted"
+      :license-terms-status="isLicenseTermsAccepted"
+    />
+    <Snackbar /> -->
+    <v-app-bar fixed flat app>
+      <router-link to="/" class="ml-3">
+        <v-img
+          src="./src/assets/logo.png"
+          max-width="88"
+          max-height="32"
+          alt="Diabatix"
+          srcset="~/assets/logo@2x.png 2x, ~/assets/logo@3x.png 3x"
+        ></v-img>
+      </router-link>
+      <template v-if="isGranted">
+        <v-btn
+          type="button"
+          color="primary"
+          text
+          class="mx-2 text-body-2"
+          active-class="accent--text"
+        >
+          Projects
+        </v-btn>
+        <v-btn
+          type="button"
+          color="primary"
+          text
+          class="mx-2 text-body-2"
+          active-class="accent--text"
+        >
+          Libraries
+        </v-btn>
+        <v-btn
+          v-if="isSuperUser || isSuperAdmin"
+          type="button"
+          color="primary"
+          text
+          class="mx-2 text-body-2"
+          active-class="accent--text"
+        >
+          Organizations
+        </v-btn>
+        <v-btn
+          v-if="isAdmin || isSuperAdmin"
+          type="button"
+          color="primary"
+          text
+          class="mx-2 text-body-2"
+          active-class="accent--text"
+        >
+          Data overview
+        </v-btn>
+        <v-spacer />
+        <template v-if="organization">
+          <div class="d-flex text-body-2 mr-4 align-center">
+            <v-icon class="mx-2">mdi-cash-multiple</v-icon>
+            <span class="accent--text">{{
+              organization.credits - organization.creditsInUse
+            }}</span>
+            <span class="mx-1 text--secondary">/</span>
+            <span class="text--secondary" v-text="organization.credits"></span>
+          </div>
+        </template>
+        <v-menu offset-y tile>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              type="button"
+              elevation="0"
+              large
+              text
+              class="px-2 rounded-0"
+              v-bind="attrs"
+              v-on="on"
+            >
+              <v-tooltip bottom :disabled="true">
+                <template #activator="{ on, attrs }">
+                  <v-avatar size="34" class="mr-1" v-bind="attrs" v-on="on">
+                    <v-icon large>mdi-account-circle</v-icon>
+                  </v-avatar>
+                </template>
+              </v-tooltip>
+              <div class="accent--text">
+                <div>{{ fullName }}</div>
+                <small v-if="organization">{{ organization.name }}</small>
+              </div>
+              <v-icon x-small class="ml-2 text--secondary">
+                mdi-chevron-down
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-list dense>
+            <v-list-item :to="{ name: 'profile' }" :exact="true">
+              <v-list-item-title>Profile</v-list-item-title>
+            </v-list-item>
+            <v-list-item
+              v-if="isSuperAdmin || isAdmin"
+              :to="{
+                name: 'profile-organizationId',
+                params: { organizationId: organizationId },
+              }"
+              :exact="true"
+            >
+              <v-list-item-title>Company profile</v-list-item-title>
+            </v-list-item>
+            <v-list-item
+              v-if="organizationId !== user.organizationId"
+              color="error"
+              @click="switchOrganization"
+            >
+              <v-list-item-title class="error--text">
+                Exit company
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item color="error" @click="logout">
+              <v-list-item-title class="error--text">
+                Logout
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+        <v-btn
+          class="ma-0"
+          text
+          icon
+          href="https://www.diabatix.com/documentation"
+          target="_blank"
+        >
+          <v-icon>mdi-help-circle</v-icon>
+        </v-btn>
+      </template>
+    </v-app-bar>
+    <v-main>
+      <router-view />
+    </v-main>
+  </v-app>
 </template>
 
 <script setup lang="ts">
@@ -13,16 +146,32 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 const token = localStorage.getItem('auth0_token')
-console.log(token)
 
-store.dispatch('auth/isAuthenticated', token)
+const isGranted = computed(() => store.getters['auth/isGranted'])
 
-const test = ref(store.getters['auth/isGranted'])
-console.log(test)
+const isSuperAdmin = computed(() => store.getters['user/isSuperAdmin'])
+const isSuperUser = computed(() => store.getters['user/isSuperUser'])
+const isAdmin = computed(() => store.getters['user/isAdmin'])
+const user = computed(() => store.getters['user/getUser'])
+const fullName = computed(() => `${user.value.firstName} ${user.value.lastName}`)
 
-watch(test, (newVal, oldVal) => {
-  console.log('eee')
-  if (newVal) store.dispatch('user/fetchUser')
+const organizationId = computed(() => store.getters['organization/organizationId'])
+const organization = computed(() => store.getters['organization/organization'])
+
+store.dispatch('auth/isAuthenticated', token).then(() => {
+  store.dispatch('user/fetchUser', token).then(() => {
+    store.dispatch('organization/fetchOrganizationProfile', user.value.organizationId)
+  })
 })
 
+const logout = () => {
+  store.dispatch('auth/logout')
+}
+
+const switchOrganization = () => {
+  store.commit('organization/setOrganization', {
+    organizationId: null,
+  })
+  window.location.assign('/')
+}
 </script>

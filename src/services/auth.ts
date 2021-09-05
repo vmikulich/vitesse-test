@@ -18,10 +18,7 @@ export default async() => {
     redirect_uri: 'http://localhost:3000/auth',
   })
 
-  const isAuthenticated = await authClient.isAuthenticated()
-
   return {
     authClient,
-    isAuthenticated,
   }
 }
