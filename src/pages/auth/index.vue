@@ -9,12 +9,11 @@ const router = useRouter()
 
 onMounted(async() => {
   await store.dispatch('auth/handleRedirect')
-  router.push('/projects')
+  router.push('/')
 })
 </script>
 
-<script lang="ts">
-export default {
-  layout: 'empty',
-}
-</script>
+<route lang="yaml">
+meta:
+  layout: empty
+</route>

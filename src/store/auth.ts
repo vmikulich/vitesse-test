@@ -36,14 +36,15 @@ const actions: ActionTree<AuthState, RootState> = {
     const isAuth: boolean = await authClient.isAuthenticated()
     if (isAuth) {
       commit('setCharList', isAuth)
-      axios.defaults.headers.common.Authorization = `Bearer ${token}`
+      axios.defaults.headers.common.Authorization = token
     }
   },
 
-  async handleRedirect({ dispatch }): Promise<void> {
+  async handleRedirect(): Promise<void> {
     await authClient.handleRedirectCallback()
     const token = await authClient.getTokenSilently()
-    dispatch('isAuthenticated', token)
+    // dispatch('isAuthenticated', token)
+    localStorage.setItem('auth._token.auth0', `Bearer ${token}`)
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
   },
 }

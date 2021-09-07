@@ -1,11 +1,12 @@
 <template>
-  <v-app>
-    <!-- <TermsOfUse
-      v-if="acceptWindowStatus"
+  <v-app v-if="showTemplate">
+    <TermsOfUse
+      v-if="isAcceptWindowVisible"
       :user-terms-status="isTermsOfUseAccepted"
       :license-terms-status="isLicenseTermsAccepted"
+      :is-admin="isAdmin"
     />
-    <Snackbar /> -->
+    <Snackbar />
     <v-app-bar fixed flat app>
       <router-link to="/" class="ml-3">
         <v-img
@@ -101,14 +102,14 @@
               v-if="isSuperAdmin || isAdmin"
               :to="{
                 name: 'profile-organizationId',
-                params: { organizationId: organizationId },
+                params: { organizationId: switchedOrganizationId },
               }"
               :exact="true"
             >
               <v-list-item-title>Company profile</v-list-item-title>
             </v-list-item>
             <v-list-item
-              v-if="organizationId !== user.organizationId"
+              v-if="switchedOrganizationId !== user.organizationId"
               color="error"
               @click="switchOrganization"
             >
@@ -135,6 +136,7 @@
       </template>
     </v-app-bar>
     <v-main>
+      <v-btn @click="logout">Logout</v-btn>
       <router-view />
     </v-main>
   </v-app>
@@ -142,26 +144,41 @@
 
 <script setup lang="ts">
 import { useStore } from 'vuex'
+import useUserRoles from '~/use/useUserRoles'
+import { USER_ROLES as userRoles } from '~/constants/index'
 
 const store = useStore()
+const { isSuperAdmin, isSuperUser, isAdmin } = useUserRoles(store)
 
-const token = localStorage.getItem('auth0_token')
+const token = localStorage.getItem('auth._token.auth0')
+
+const acceptWindowStatus = ref(false)
+const showTemplate = ref(false)
 
 const isGranted = computed(() => store.getters['auth/isGranted'])
 
-const isSuperAdmin = computed(() => store.getters['user/isSuperAdmin'])
-const isSuperUser = computed(() => store.getters['user/isSuperUser'])
-const isAdmin = computed(() => store.getters['user/isAdmin'])
 const user = computed(() => store.getters['user/getUser'])
 const fullName = computed(() => `${user.value.firstName} ${user.value.lastName}`)
+const isTermsOfUseAccepted = computed(() => user.value.termsOfUseAccepted)
 
-const organizationId = computed(() => store.getters['organization/organizationId'])
+const switchedOrganizationId = computed(() => store.getters['organization/switchedOrganizationId'])
 const organization = computed(() => store.getters['organization/organization'])
+const isLicenseTermsAccepted = computed(() => organization.value.licenseTermsAccepted || false)
 
-store.dispatch('auth/isAuthenticated', token).then(() => {
-  store.dispatch('user/fetchUser', token).then(() => {
-    store.dispatch('organization/fetchOrganizationProfile', user.value.organizationId)
-  })
+const isAcceptWindowVisible = computed(() => {
+  return (
+    acceptWindowStatus.value
+    && user.role !== userRoles.superAdmin
+    && user.role !== userRoles.superUser
+  )
+})
+
+onMounted(async() => {
+  await store.dispatch('auth/isAuthenticated', token)
+  await store.dispatch('user/fetchUser', token)
+  await store.dispatch('organization/fetchOrganizationProfile', user.value.organizationId)
+  acceptWindowStatus.value = true
+  showTemplate.value = true
 })
 
 const logout = () => {
@@ -170,7 +187,7 @@ const logout = () => {
 
 const switchOrganization = () => {
   store.commit('organization/setOrganization', {
-    organizationId: null,
+    switchedOrganizationId: null,
   })
   window.location.assign('/')
 }

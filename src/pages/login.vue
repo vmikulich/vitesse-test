@@ -12,8 +12,7 @@ onMounted(async() => {
 })
 </script>
 
-<script lang="ts">
-export default {
-  layout: 'empty',
-}
-</script>
+<route lang="yaml">
+meta:
+  layout: empty
+</route>

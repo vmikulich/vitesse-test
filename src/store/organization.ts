@@ -2,16 +2,17 @@ import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import axios from 'axios'
 import { RootState } from './index'
 import organizationService from '~/services/organization'
+import { IOrganization } from '~/interfaces/organizations'
 export interface OrganizationState {
-  organizationId: number|''|null
-  profile: object|null
+  switchedOrganizationId: number|''|null
+  profile: IOrganization|null
 }
 
 const getDefaultState = (): OrganizationState => {
-  const organizationId = localStorage.getItem('organizationId')
+  const switchedOrganizationId = localStorage.getItem('switchedOrganizationId')
 
   return {
-    organizationId: organizationId && Number(organizationId),
+    switchedOrganizationId: switchedOrganizationId && Number(switchedOrganizationId),
     profile: null,
   }
 }
@@ -43,14 +44,13 @@ const actions: ActionTree<OrganizationState, RootState> = {
   },
   async fetchOrganizationProfile({ commit }, payload: number) {
     const response = await organizationService.fetch(axios, payload)
-
-    commit('setProfile', response.data)
+    commit('setProfile', response)
   },
 }
 
 const getters: GetterTree<OrganizationState, RootState> = {
-  organizationId(state) {
-    return state.organizationId
+  switchedOrganizationId(state) {
+    return state.switchedOrganizationId
   },
 
   organization(state) {

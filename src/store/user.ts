@@ -4,21 +4,7 @@ import { RootState } from './index'
 import axios from 'axios'
 import userService from './../services/user'
 import { USER_ROLES } from '~/constants'
-
-interface IUser {
-  created: string
-  email: string
-  firstName: string
-  id: number
-  isMFAEnabled: boolean
-  lastName: string
-  organizationId: number
-  organizationName: string
-  profileId: string
-  role: number
-  termsOfUseAccepted: boolean
-  updated: string
-}
+import { IUser } from '~/interfaces/user'
 
 export interface UserState {
   user: IUser|null
@@ -35,8 +21,10 @@ const mutations: MutationTree<UserState> = {
 }
 
 const actions: ActionTree<UserState, RootState> = {
-  async fetchUser({ commit }) {
-    const user = await userService.fetch(axios)
+  async fetchUser({ commit }, token) {
+    const user = await userService.fetch(axios, token)
+    localStorage.setItem('auth._token.auth0', token)
+    axios.defaults.headers.common.Authorization = token
     commit('setUser', user)
   },
 }
@@ -46,24 +34,24 @@ const getters: GetterTree<UserState, RootState> = {
     return state.user
   },
 
-  isSuperAdmin(state, getters, rootState, rootGetters) {
-    return state.user
-      ? (state.user.role === USER_ROLES.superAdmin && !rootGetters['organization/organizationId'])
-      : false
-  },
+  // isSuperAdmin(state, getters, rootState, rootGetters) {
+  //   return state.user
+  //     ? (state.user.role === USER_ROLES.superAdmin && !rootGetters['organization/organizationId'])
+  //     : false
+  // },
 
-  isSuperUser(state, getters, rootState, rootGetters) {
-    return state.user
-      ? (state.user.role === USER_ROLES.superUser && !rootGetters['organization/organizationId'])
-      : false
-  },
+  // isSuperUser(state, getters, rootState, rootGetters) {
+  //   return state.user
+  //     ? (state.user.role === USER_ROLES.superUser && !rootGetters['organization/organizationId'])
+  //     : false
+  // },
 
-  isAdmin(state, getters, rootState, rootGetters) {
-    return state.user
-      ? state.user.role === USER_ROLES.admin
-        || (state.user.role === USER_ROLES.superUser && rootGetters['organization/organizationId'])
-      : false
-  },
+  // isAdmin(state, getters, rootState, rootGetters) {
+  //   return state.user
+  //     ? state.user.role === USER_ROLES.admin
+  //       || (state.user.role === USER_ROLES.superUser && rootGetters['organization/organizationId'])
+  //     : false
+  // },
 }
 
 const namespaced = true
