@@ -11,8 +11,8 @@
       <router-link to="/" class="ml-3">
         <v-img
           src="./src/assets/logo.png"
-          max-width="88"
-          max-height="32"
+          width="88"
+          height="32"
           alt="Diabatix"
           srcset="~/assets/logo@2x.png 2x, ~/assets/logo@3x.png 3x"
         ></v-img>

@@ -51,7 +51,7 @@
                   type="button"
                   class="ml-auto mt-n4"
                   icon
-                  @click="addProjectDialog = false"
+                  @click="addProjectDialogHandler(false)"
                 >
                   <v-icon>mdi-close</v-icon>
                 </v-btn>
@@ -71,6 +71,8 @@
                     required
                     outlined
                     :maxlength="255"
+                    :error-messages="getErrors('name')"
+                    @blur="v$.name.$touch()"
                   ></v-text-field>
                   <v-textarea
                     v-model.trim="project.description"
@@ -79,6 +81,8 @@
                     rows="6"
                     outlined
                     :maxlength="255"
+                    :error-messages="getErrors('name')"
+                    @blur="v$.description.$touch()"
                   ></v-textarea>
                 </v-form>
               </v-card-text>
@@ -151,17 +155,32 @@
 
 <script setup lang="ts">
 import { useStore } from 'vuex'
+import useVuelidate from '@vuelidate/core'
+import { required, maxLength } from '@vuelidate/validators'
 import { PROJECT_STATUSES_NAMES as projectStatuses } from '~/constants/index'
 
 const router = useRouter()
 const store = useStore()
 
 const statuses = ref([])
-const addProjectDialog = ref(false)
+const addProjectDialog = ref(true)
+
 const project = reactive({
   name: '',
   description: '',
 })
+const projectValidators = {
+  name: {
+    required,
+    maxLength: maxLength(255),
+  },
+  description: {
+    required,
+    maxLength: maxLength(255),
+  },
+}
+const v$ = useVuelidate(projectValidators, project)
+
 const loading = ref(false)
 const statusOptions = [
   { status: 0, name: 'Ongoing' },
@@ -207,8 +226,12 @@ onMounted(async() => {
   await store.dispatch('projects/fetchAllProjects', data)
 })
 
+const addProjectDialogHandler = (status: boolean) => {
+  addProjectDialog.value = !addProjectDialog.value
+}
+
 const handleServerError = (error) => {
-  const message = error.response.data.Message
+  const message = error.Message
 
   store.commit('snackbar/error', {
     message,
@@ -224,9 +247,52 @@ const toggleProjectStatus = async(projectId: number, isProjectClosed: boolean) =
       },
     }
     await store.dispatch('changeStatus', data)
-    // this.$nuxt.refresh()
   } catch (error) {
     handleServerError(error)
+  }
+}
+
+const filterStatus = (status: string) => {
+  router.replace({ name: 'projects', query: { status } })
+}
+
+const getErrors = (name) => {
+  const errors: Array<string> = []
+  const model = v$.value[name]
+  if (!model.$dirty) return errors
+  switch (name) {
+    case 'name':
+      !model.required && errors.push('Please enter project name')
+      break
+    case 'description':
+      !model.required && errors.push('Please enter project description')
+      break
+    default:
+      break
+  }
+  return errors
+}
+
+const submit = async() => {
+  try {
+    loading.value = true
+    const data = {
+      ...project,
+      organizationId: organizationId.value,
+    }
+    const { projectId } = await store.dispatch('projects/createProject', data)
+    addProjectDialog.value = false
+    store.commit('snackbar/success')
+    router.push({
+      name: 'projects-projectId',
+      params: {
+        projectId,
+      },
+    })
+  } catch (error) {
+    handleServerError(error)
+  } finally {
+    loading.value = false
   }
 }
 

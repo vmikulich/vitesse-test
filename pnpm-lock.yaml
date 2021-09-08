@@ -10,6 +10,8 @@ specifiers:
   '@vitejs/plugin-vue': ^1.6.0
   '@vue/compiler-sfc': ^3.2.6
   '@vue/server-renderer': ^3.2.6
+  '@vuelidate/core': ^2.0.0-alpha.25
+  '@vuelidate/validators': ^2.0.0-alpha.21
   '@vuetify/vite-plugin': 1.0.0-alpha.2
   '@vueuse/core': ^6.0.0
   '@vueuse/head': ^0.5.1
@@ -47,6 +49,8 @@ specifiers:
 dependencies:
   '@auth0/auth0-spa-js': 1.17.0
   '@mdi/font': 5.9.55
+  '@vuelidate/core': 2.0.0-alpha.25_vue@3.2.6
+  '@vuelidate/validators': 2.0.0-alpha.21_vue@3.2.6
   '@vuetify/vite-plugin': 1.0.0-alpha.2_b071b2ddef216a89d2b09b529bdceb5c
   '@vueuse/core': 6.0.0_vue@3.2.6
   '@vueuse/head': 0.5.1_vue@3.2.6
@@ -1896,6 +1900,24 @@ packages:
   /@vue/shared/3.2.7:
     resolution: {integrity: sha512-YwGOcNZjOY/MmadpzFBXWyHEwZSf0lVU4XF5zpD7tXC9dmqjdo38Jkk06wATu4LYHDPW4emXKMB5YLFPWPkwFA==}
     dev: true
+
+  /@vuelidate/core/2.0.0-alpha.25_vue@3.2.6:
+    resolution: {integrity: sha512-8gDZsESacXw++G45yDLB5Fw+tc9fTbRvkL3XFaAhA9Wia6mPp/nS+iLPRrXhwPex5OPqdjre44ZSvMCu7fgpCA==}
+    dependencies:
+      vue-demi: 0.11.3_vue@3.2.6
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
+
+  /@vuelidate/validators/2.0.0-alpha.21_vue@3.2.6:
+    resolution: {integrity: sha512-Ch+dW2hSWxAv+DcCEbpMVB58rylrCRxrGQMvL1gJKtq2SdrIrvw+IfgGL9VtxLx8U8gqlDiqy7M4Ycu59rUSnA==}
+    dependencies:
+      vue-demi: 0.11.3_vue@3.2.6
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: false
 
   /@vuetify/loader-shared/1.1.1_vuetify@3.0.0-alpha.11:
     resolution: {integrity: sha512-JUs+8dBr64M/Vgndu9k6LBWzuAj43CrwVp6R94XMY/p7j5MNKsGYG1MSxqxwFN6IXYTxPkclgWZVv2gH+PulUg==}

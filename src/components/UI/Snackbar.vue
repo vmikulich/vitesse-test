@@ -11,18 +11,17 @@ const store = useStore()
 
 const show = ref(false)
 const top = ref(true)
-const message = ref('')
-const color = ref('')
+const message = ref(null)
+const color = ref(null)
 
 watch(
   () => store.getters['snackbar/snackbarData'],
   (newValue, oldValue) => {
-    const { message, color } = newValue.data
-    if (message) {
+    if (newValue.message) {
       show.value = true
-      message.value = message
+      message.value = newValue.message
 
-      color.value = color
+      color.value = newValue.color
       store.commit('snackbar/reset')
     }
   },

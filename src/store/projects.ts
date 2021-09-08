@@ -24,8 +24,13 @@ const actions: ActionTree<ProjectState, RootState> = {
     const projects = await projectsService.fetchAll(axios, payload)
     commit('setProjects', projects)
   },
+
   async changeStatus(context, payload) {
     await projectsService.changeProjectStatus(axios, payload)
+  },
+
+  async createProject(context, payload) {
+    return await projectsService.create(axios, payload)
   },
 }
 
