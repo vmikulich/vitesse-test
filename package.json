@@ -7,6 +7,7 @@
     "preview-https": "serve dist"
   },
   "dependencies": {
+    "@apidevtools/json-schema-ref-parser": "^9.0.9",
     "@auth0/auth0-spa-js": "^1.17.0",
     "@mdi/font": "^5.9.55",
     "@vuelidate/core": "^2.0.0-alpha.25",
@@ -15,9 +16,13 @@
     "@vueuse/core": "^6.0.0",
     "@vueuse/head": "^0.5.1",
     "axios": "^0.21.1",
+    "itk": "^14.1.1",
+    "jszip": "^3.7.1",
+    "mousetrap": "^1.6.5",
     "nprogress": "^0.2.0",
     "sass": "^1.39.0",
     "sass-loader": "^12.1.0",
+    "vtk.js": "^19.2.8",
     "vue": "^3.2.6",
     "vue-cli-plugin-vuetify": "^2.4.2",
     "vue-demi": "^0.11.3",

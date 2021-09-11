@@ -1,5 +1,10 @@
 {
   "extends": [
     "@antfu"
-  ]
+  ],
+  "rules": {
+    "curly": "off",
+    "brace-style" : "off",
+    "no-unreachable-loop": "off"
+  }
 }

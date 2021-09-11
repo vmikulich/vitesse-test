@@ -1,0 +1,230 @@
+<v-container fluid
+  :class="{ [$style.container]: true, [$style.fullscreen]: fullscreen }">
+  <v-card :class="$style.floatToolbar">
+    <v-card-text class="py-2 px-2">
+      <v-tooltip top>
+        <span class="pv-no-select">Reset camera</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="resetCamera()"
+            color="primary">
+            <v-icon>mdi-image-filter-center-focus</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top>
+        <span class="pv-no-select">Rotate camera left 90°</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="rollLeft()"
+            color="primary">
+            <v-icon>mdi-rotate-left</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top>
+        <span class="pv-no-select">Rotate camera right 90°</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="rollRight()"
+            color="primary">
+            <v-icon>mdi-rotate-right</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top
+        v-if="type === 'View3D'">
+        <span class="pv-no-select">Reset Camera to Orientation {{orientationLabels[0]}}</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="updateOrientation('x')"
+            color="#ff0000"
+          >
+            {{orientationLabels[0]}}
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top
+        v-if="type === 'View3D'">
+        <span class="pv-no-select">Reset Camera to Orientation {{orientationLabels[1]}}</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="updateOrientation('y')"
+            color="#fed000"
+          >
+            {{orientationLabels[1]}}
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top
+        v-if="type === 'View3D'">
+        <span class="pv-no-select">Reset Camera to Orientation {{orientationLabels[2]}}</span>
+        <template v-slot:activator="{ on }">
+          <v-btn icon
+            v-on="on"
+            v-on:click="updateOrientation('z')"
+            color="#008000"
+          >
+            {{orientationLabels[2]}}
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top>
+        <span class="pv-no-select">Toggle Fullscreen</span>
+        <template v-slot:activator="{ on }">
+          <v-btn color="primary"
+            icon
+            v-on="on"
+            @click="toggleFullscreen">
+            <v-icon>{{
+              fullscreen ? 'mdi-fullscreen-exit' : 'mdi-fullscreen'
+              }}</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+      <v-tooltip top>
+        <span class="pv-no-select">Take Screenshot</span>
+        <template v-slot:activator="{ on }">
+          <v-btn color="primary"
+            icon
+            v-on="on"
+            @click="screenCapture">
+            <v-icon>mdi-camera</v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
+    </v-card-text>
+  </v-card>
+  <v-layout column
+    fill-height>
+    <v-flex fill-height
+      class="js-view"
+      :class="$style.vtkView"
+      :style="{ background: backgroundColor }"
+      v-on:mousedown="view.activate()" />
+    <div v-if="isActive"
+      :class="$style.activeView" />
+    <div :class="$style.toolbarWrapper"
+      v-if="false">
+      <toolbar-sheet v-model="backgroundSheet">
+        <v-container grid-list-md
+          class="mr-0">
+          <v-layout row>
+            <v-spacer />
+            <palette-picker :size="24"
+              :palette="palette"
+              :value="backgroundColor"
+              v-on:input="changeBackgroundColor" />
+          </v-layout>
+        </v-container>
+      </toolbar-sheet>
+      <v-toolbar dark
+        height="45px"
+        :class="$style.smallToolbar">
+        <v-select dense
+          flat
+          hide-details
+          :class="$style.viewTypeSelector"
+          :items="viewTypes"
+          :value="viewType"
+          @change="changeViewType" />
+        <v-spacer />
+        <v-tooltip top
+          v-if="type === 'View3D'"
+          :disabled="smallScreen || viewPointMenuVisible">
+          <template v-slot:activator="{ on: tooltip }">
+            <v-menu offset-y
+              top
+              left
+              v-model="viewPointMenuVisible">
+              <template v-slot:activator="{ on: menu }">
+                <v-btn :class="$style.button"
+                  icon
+                  v-on="{ ...tooltip, ...menu }"
+                  v-show="cameraViewPoints.length"
+                  :disabled="viewPointMenuVisible">
+                  <v-icon>mdi-camera-switch</v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item v-for="(item, index) in cameraViewPoints"
+                  :key="index"
+                  @click="changeCameraViewPoint(item)">
+                  <v-list-item-title>{{ item }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </template>
+          <span class="pv-no-select">Change View Point</span>
+        </v-tooltip>
+        <v-tooltip top>
+          <span class="pv-no-select">Background color</span>
+          <template v-slot:activator="{ on }">
+            <v-btn :class="$style.button"
+              icon
+              :disabled="backgroundSheet || !view"
+              v-on="on"
+              v-on:click="backgroundSheet = !backgroundSheet">
+              <v-icon>mdi-palette</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip top>
+          <span class="pv-no-select">Screenshot</span>
+          <template v-slot:activator="{ on }">
+            <v-btn :class="$style.button"
+              icon
+              v-on="on"
+              v-on:click="screenCapture()">
+              <v-icon>mdi-camera-plus</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip top
+          v-if="!smallScreen && singleViewButton"
+          key="singleView">
+          <span class="pv-no-select">Single view</span>
+          <template v-slot:activator="{ on }">
+            <v-btn :class="$style.button"
+              icon
+              v-on="on"
+              v-on:click="singleView(layoutIndex)">
+              <v-icon>mdi-fullscreen</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip top
+          v-if="!smallScreen && flipViewButton"
+          key="flipView">
+          <span class="pv-no-select">Split view</span>
+          <template v-slot:activator="{ on }">
+            <v-btn :class="$style.button"
+              icon
+              v-on="on"
+              v-on:click="splitView(layoutIndex)">
+              <v-icon>mdi-flip-horizontal</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip top
+          v-if="!smallScreen && quadViewButton"
+          key="quadView">
+          <span class="pv-no-select">Quad view</span>
+          <template v-slot:activator="{ on }">
+            <v-btn :class="$style.button"
+              icon
+              v-on="on"
+              v-on:click="quadView(layoutIndex)">
+              <v-icon>mdi-widgets</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+      </v-toolbar>
+    </div>
+  </v-layout>
+</v-container>

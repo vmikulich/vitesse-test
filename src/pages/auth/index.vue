@@ -9,7 +9,7 @@ const router = useRouter()
 
 onMounted(async() => {
   await store.dispatch('auth/handleRedirect')
-  router.push('/')
+  router.push('/projects')
 })
 </script>
 

@@ -23,10 +23,10 @@ const mutations: MutationTree<OrganizationState> = {
   setOrganization(state, payload) {
     if (payload.organizationId) {
       localStorage.setItem('organizationId', payload.organizationId)
-      state.organizationId = payload.organizationId
+      state.switchedOrganizationId = payload.organizationId
     } else {
       localStorage.removeItem('organizationId')
-      state.organizationId = null
+      state.switchedOrganizationId = null
     }
   },
 
@@ -36,7 +36,7 @@ const mutations: MutationTree<OrganizationState> = {
 }
 
 const actions: ActionTree<OrganizationState, RootState> = {
-  async setOrganization({ commit }, payload) {
+  async switchOrganization({ commit }, payload) {
     commit('setOrganization', payload)
     if (!payload.skipUpdate) {
       await commit('getOrganizationProfile')

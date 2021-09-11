@@ -1,21 +1,32 @@
-
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
+import axios from 'axios'
 import projectsService from './../services/projects'
 import { RootState } from './index'
-import axios from 'axios'
-import { IProjects } from '~/interfaces/projects'
+import { IProject } from '~/interfaces/projects'
 
 export interface ProjectState {
-  projects: Array<IProjects>
+  projects: Array<IProject>
+  project: IProject|null
 }
 
 export const state: ProjectState = {
   projects: [],
+  project: null,
+}
+
+const getters: GetterTree<ProjectState, RootState> = {
+  projects(state) {
+    return state.projects
+  },
 }
 
 const mutations: MutationTree<ProjectState> = {
-  setProjects(state, payload: Array<IProjects>) {
+  setProjects(state, payload: Array<IProject>) {
     state.projects = payload
+  },
+
+  setProject(state, payload: IProject) {
+    state.project = payload
   },
 }
 
@@ -25,18 +36,17 @@ const actions: ActionTree<ProjectState, RootState> = {
     commit('setProjects', projects)
   },
 
+  async fetchProject({ commit }, payload) {
+    const projects = await projectsService.fetchById(axios, payload)
+    commit('setProject', projects)
+  },
+
   async changeStatus(context, payload) {
     await projectsService.changeProjectStatus(axios, payload)
   },
 
   async createProject(context, payload) {
     return await projectsService.create(axios, payload)
-  },
-}
-
-const getters: GetterTree<ProjectState, RootState> = {
-  projects(state) {
-    return state.projects
   },
 }
 

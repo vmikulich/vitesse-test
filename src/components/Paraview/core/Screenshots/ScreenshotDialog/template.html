@@ -1,0 +1,93 @@
+<v-dialog :value="showDialog"
+  @input="close"
+  scrollable
+  max-width="424px">
+  <v-card flat
+    v-if="screenshot">
+    <v-card-title>
+      <span class="headline font-weight-medium">Save Screenshot</span>
+      <v-btn class="ml-auto mt-n4"
+        icon
+        @click.native="close"
+        type="button">
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
+    </v-card-title>
+    <v-card-text>
+      <v-row>
+        <v-col cols="12"
+          class="mb-4">
+          <v-img :class="$style.imagePreview"
+            :src="imageUrl"
+            contain
+            :height="smallScreen ? '125px' : '250px'" />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="8">
+          <v-text-field v-model="filename"
+            label="Filename"
+            hide-details
+            outlined />
+        </v-col>
+        <v-col cols="4">
+          <v-select label="File type"
+            hide-details
+            single-line
+            v-model="fileType"
+            :items="fileTypes"
+            hide-details
+            outlined />
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
+          <v-checkbox label="Transparent background"
+            v-model="transparentBackground"
+            class="mt-2"
+            hide-details />
+        </v-col>
+      </v-row>
+      <v-row v-if="screenshot.projectId">
+        <v-col cols="12">
+          <v-btn type="button"
+            class="mt-2"
+            color="primary"
+            large
+            outlined
+            block
+            :loading="loading"
+            @click.native="setAsProjectThumbnail">
+            Set as Project Thumbnail
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-text>
+    <v-card-actions>
+      <v-row>
+        <v-col cols="6">
+          <v-btn type="button"
+            color="primary"
+            large
+            outlined
+            block
+            @click.native="close">
+            Cancel
+          </v-btn>
+        </v-col>
+        <v-col cols="6">
+          <v-btn type="button"
+            color="primary"
+            large
+            block
+            elevation="0"
+            :href="imageUrl"
+            :download="filename + fileType"
+            @click.native="close">
+            Download
+          </v-btn>
+        </v-col>
+      </v-row>
+    </v-card-actions>
+  </v-card>
+</v-dialog>

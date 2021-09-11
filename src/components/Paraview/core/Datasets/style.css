@@ -1,0 +1,69 @@
+.datasetPanel:last-child {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* vuetify override */
+.datasetPanel:before,
+.subpanel:before {
+  box-shadow: none !important;
+}
+
+.panelContent {
+  /* for positioning the color group absolutely */
+  position: relative;
+}
+
+/* vuetify override */
+.panelContent > :global(.v-expansion-panel-content__wrap) {
+  padding: 0 !important;
+}
+
+.subpanel {
+  padding-left: 20px;
+}
+
+.panelContent .subpanel:first-child {
+  border-top: thin solid rgba(0, 0, 0, 0.1);
+}
+
+/* vuetify override */
+/* This sets flex-grow to 0 for header contents */
+.panelHeader .visibilityToggle {
+  flex: unset !important;
+}
+
+.panelHeader :global(.v-expansion-panel-header__icon) {
+  order: -1;
+}
+
+.panelHeader :global(.v-expansion-panel-header__icon .v-icon) {
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  color: #838daa;
+}
+
+.headerMenuButton {
+  /* maintain icon width */
+  flex: 0 0 auto !important;
+}
+
+:global(.v-expansion-panel--active > .v-expansion-panel-header) {
+  min-height: 48px !important;
+}
+
+.subpanelHeader {
+  /* the 12px is to line up the expansion panel hide/show icons */
+  padding: 2px 12px 2px 4px !important;
+  /* revert subpanel height to non-active height */
+  min-height: 48px !important;
+}
+
+.visibilityToggle :global(.v-icon) {
+  visibility: hidden;
+}
+
+.visibilityToggle:hover :global(.v-icon),
+.visibilityToggle.visibilityToggleActive :global(.v-icon) {
+  visibility: visible;
+}

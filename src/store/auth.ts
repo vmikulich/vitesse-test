@@ -4,7 +4,7 @@ import useAuthService from './../services/auth'
 import { RootState } from './index'
 import axios from 'axios'
 
-const { authClient } = await useAuthService()
+const authClient = await useAuthService()
 
 export interface AuthState {
   isGranted: boolean
@@ -24,28 +24,22 @@ const mutations: MutationTree<AuthState> = {
 
 const actions: ActionTree<AuthState, RootState> = {
   login(): void {
-    authClient.loginWithRedirect()
+    authClient.login()
   },
 
   logout(): void {
     authClient.logout()
-    delete axios.defaults.headers.common.Authorization
   },
 
-  async isAuthenticated({ commit }, token) {
-    const isAuth: boolean = await authClient.isAuthenticated()
+  async checkAuthentication({ commit }, token: string): Promise<void> {
+    const isAuth = await authClient.isAuthenticated(token)
     if (isAuth) {
       commit('setCharList', isAuth)
-      axios.defaults.headers.common.Authorization = token
     }
   },
 
   async handleRedirect(): Promise<void> {
-    await authClient.handleRedirectCallback()
-    const token = await authClient.getTokenSilently()
-    // dispatch('isAuthenticated', token)
-    localStorage.setItem('auth._token.auth0', `Bearer ${token}`)
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`
+    await authClient.handleRedirect()
   },
 }
 

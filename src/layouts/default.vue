@@ -111,7 +111,7 @@
             <v-list-item
               v-if="switchedOrganizationId !== user.organizationId"
               color="error"
-              @click="switchOrganization"
+              @click="onSwitchOrganization"
             >
               <v-list-item-title class="error--text">
                 Exit company
@@ -143,27 +143,33 @@
 </template>
 
 <script setup lang="ts">
-import { useStore } from 'vuex'
-import useUserRoles from '~/use/useUserRoles'
+import useUser from '~/use/useUser'
+import useAuth from '~/use/useAuth'
+import useOrganization from '~/use/useOrganization'
 import { USER_ROLES as userRoles } from '~/constants/index'
-
-const store = useStore()
-const { isSuperAdmin, isSuperUser, isAdmin } = useUserRoles(store)
 
 const token = localStorage.getItem('auth._token.auth0')
 
-const acceptWindowStatus = ref(false)
-const showTemplate = ref(false)
+const {
+  user,
+  fullName,
+  isSuperAdmin,
+  isSuperUser,
+  isAdmin,
+  isTermsOfUseAccepted,
+  fetchUser,
+} = useUser()
+const {
+  organization,
+  switchedOrganizationId,
+  isLicenseTermsAccepted,
+  fetchOrganizationProfile,
+  setOrganization,
+} = useOrganization()
+const { isGranted, checkAuthentication, logout } = useAuth()
 
-const isGranted = computed(() => store.getters['auth/isGranted'])
-
-const user = computed(() => store.getters['user/getUser'])
-const fullName = computed(() => `${user.value.firstName} ${user.value.lastName}`)
-const isTermsOfUseAccepted = computed(() => user.value.termsOfUseAccepted)
-
-const switchedOrganizationId = computed(() => store.getters['organization/switchedOrganizationId'])
-const organization = computed(() => store.getters['organization/organization'])
-const isLicenseTermsAccepted = computed(() => organization.value.licenseTermsAccepted || false)
+const acceptWindowStatus = ref<boolean>(false)
+const showTemplate = ref<boolean>(false)
 
 const isAcceptWindowVisible = computed(() => {
   return (
@@ -174,21 +180,15 @@ const isAcceptWindowVisible = computed(() => {
 })
 
 onMounted(async() => {
-  await store.dispatch('auth/isAuthenticated', token)
-  await store.dispatch('user/fetchUser', token)
-  await store.dispatch('organization/fetchOrganizationProfile', user.value.organizationId)
+  await checkAuthentication(token)
+  await fetchUser(token)
+  await fetchOrganizationProfile(user.value.organizationId)
   acceptWindowStatus.value = true
   showTemplate.value = true
 })
 
-const logout = () => {
-  store.dispatch('auth/logout')
-}
-
-const switchOrganization = () => {
-  store.commit('organization/setOrganization', {
-    switchedOrganizationId: null,
-  })
+const onSwitchOrganization = () => {
+  setOrganization(null)
   window.location.assign('/')
 }
 </script>

@@ -139,7 +139,7 @@
       <v-flex grow d-flex>
         <div class="mx-auto my-auto">
           <v-img
-            src="/assets/content-placeholder.svg"
+            src="./src/assets/content-placeholder.svg"
             width="132"
             height="132"
             class="mb-4 mt-n4 mx-auto"
@@ -157,15 +157,29 @@
 import { useStore } from 'vuex'
 import useVuelidate from '@vuelidate/core'
 import { required, maxLength } from '@vuelidate/validators'
+import useUser from '~/use/useUser'
+import useProject from '~/use/useProject'
+import useOrganization from '~/use/useOrganization'
+import { IProject } from '~/interfaces/projects'
 import { PROJECT_STATUSES_NAMES as projectStatuses } from '~/constants/index'
 
 const router = useRouter()
 const store = useStore()
 
-const statuses = ref([])
-const addProjectDialog = ref(true)
+const { canEdit } = useUser()
+const { organizationId } = useOrganization()
+const {
+  projects,
+  fetchAllProjects,
+  changeProjectStatus,
+  createProject,
+} = useProject()
 
-const project = reactive({
+const statuses = ref<number[]>([])
+const addProjectDialog = ref<boolean>(false)
+const loading = ref<boolean>(false)
+
+const project = reactive<{ name: string; description: string }>({
   name: '',
   description: '',
 })
@@ -181,26 +195,19 @@ const projectValidators = {
 }
 const v$ = useVuelidate(projectValidators, project)
 
-const loading = ref(false)
-const statusOptions = [
+const statusOptions: { status: number; name: string }[] = [
   { status: 0, name: 'Ongoing' },
   { status: 1, name: 'Problem' },
   { status: 2, name: 'Finished' },
   { status: 3, name: 'Closed' },
 ]
-const canEdit = computed(() => store.getters['user/getUser'] ? store.getters['user/getUser'].id > 0 : false)
-
-const organizationId = computed(() => {
-  return store.getters['user/getUser'].organizationId || store.getters['organization/organizationId']
-})
-const projects = computed(() => store.getters['projects/projects'])
 
 const archivedProjects = computed(() => {
-  return projects.value.filter(project => projectStatuses[project.status] === 'closed')
+  return projects.value.filter((project: IProject) => projectStatuses[project.status] === 'closed')
 })
 
 const openProjects = computed(() => {
-  return projects.value.filter(project => projectStatuses[project.status] !== 'closed')
+  return projects.value.filter((project: IProject) => projectStatuses[project.status] !== 'closed')
 })
 
 onMounted(async() => {
@@ -208,12 +215,13 @@ onMounted(async() => {
   const params = new URLSearchParams()
 
   if (query.status) {
-    if (Array.isArray(query.status))
+    if (Array.isArray(query.status)) {
       statuses.value.push(...query.status.map(Number))
-    else
+    }
+    else {
       statuses.value.push(+query.status)
-
-    statuses.value.forEach(status => params.append('status', status))
+    }
+    statuses.value.forEach((status: number) => params.append('status', status.toString()))
   }
 
   params.append('SortField.Order', 'asc')
@@ -223,7 +231,7 @@ onMounted(async() => {
     id: organizationId.value,
     params,
   }
-  await store.dispatch('projects/fetchAllProjects', data)
+  await fetchAllProjects(data)
 })
 
 const addProjectDialogHandler = (status: boolean) => {
@@ -232,7 +240,6 @@ const addProjectDialogHandler = (status: boolean) => {
 
 const handleServerError = (error) => {
   const message = error.Message
-
   store.commit('snackbar/error', {
     message,
   })
@@ -246,7 +253,7 @@ const toggleProjectStatus = async(projectId: number, isProjectClosed: boolean) =
         isProjectClosed,
       },
     }
-    await store.dispatch('changeStatus', data)
+    await changeProjectStatus(data)
   } catch (error) {
     handleServerError(error)
   }
@@ -256,7 +263,7 @@ const filterStatus = (status: string) => {
   router.replace({ name: 'projects', query: { status } })
 }
 
-const getErrors = (name) => {
+const getErrors = (name: string) => {
   const errors: Array<string> = []
   const model = v$.value[name]
   if (!model.$dirty) return errors
@@ -280,7 +287,7 @@ const submit = async() => {
       ...project,
       organizationId: organizationId.value,
     }
-    const { projectId } = await store.dispatch('projects/createProject', data)
+    const { projectId } = await createProject(data)
     addProjectDialog.value = false
     store.commit('snackbar/success')
     router.push({
