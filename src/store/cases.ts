@@ -1,23 +1,23 @@
 
 import { ActionTree, GetterTree, Module, MutationTree } from 'vuex'
 import axios from 'axios'
-import casesService from './../services/projects'
+import casesService from './../services/cases'
 import { RootState } from './index'
-import { ICase } from '~/interfaces/projects'
+import { ICase, ICaseSetup, ICaseFile } from '~/interfaces/cases'
 
-export interface ProjectState {
-  case: {}|null
-  caseSetup: {}|null
-  caseFiles: []|null
+export interface CasetState {
+  case: ICase|null
+  caseSetup: ICaseSetup|null
+  caseFiles: ICaseFile[]|null
 }
 
-export const state: ProjectState = {
+export const state: CasetState = {
   case: null,
   caseSetup: null,
   caseFiles: null,
 }
 
-const getters: GetterTree<ProjectState, RootState> = {
+const getters: GetterTree<CasetState, RootState> = {
   case(state) {
     return state.case
   },
@@ -31,27 +31,40 @@ const getters: GetterTree<ProjectState, RootState> = {
   },
 }
 
-const mutations: MutationTree<ProjectState> = {
-  setCase(state, payload) {
+const mutations: MutationTree<CasetState> = {
+  setCase(state, payload: ICase) {
     state.case = payload
   },
 
-  setCaseSetup(state, payload) {
+  setCaseSetup(state, payload: ICaseSetup) {
     state.caseSetup = payload
   },
 
-  setCaseFiles(state, payload) {
+  setCaseFiles(state, payload: ICaseFile[]) {
     state.caseFiles = payload
   },
 }
 
-const actions: ActionTree<ProjectState, RootState> = {
+const actions: ActionTree<CasetState, RootState> = {
+  async fetchCase({ commit }, payload: string|undefined): Promise<void> {
+    const res = await casesService.fetchCase(axios, payload)
+    commit('setCase', res)
+  },
 
+  async fetchCaseSetup({ commit }, payload: string|undefined): Promise<void> {
+    const res = await casesService.fetchCaseSetup(axios, payload)
+    commit('setCaseSetup', res)
+  },
+
+  async fetchCaseFiles({ commit }, payload: string|undefined): Promise<void> {
+    const res = await casesService.fetchCaseFiles(axios, payload)
+    commit('setCaseFiles', res)
+  },
 }
 
 const namespaced = true
 
-export const projectsModule: Module<ProjectState, RootState> = {
+export const casesModule: Module<CasetState, RootState> = {
   namespaced,
   state,
   mutations,

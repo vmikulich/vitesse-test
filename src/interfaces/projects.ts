@@ -1,7 +1,7 @@
-import { ICase } from './case'
+import { IShortCase } from './cases'
 
 export interface IProject {
-  caseGroups: Array<ICase>
+  caseGroups: Array<IShortCase>
   casesTotal: number
   description: string
   id: number

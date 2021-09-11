@@ -20,7 +20,7 @@
                 ></router-link>
                 <span class="mx-1">/</span>
                 <span class="primary--text" v-text="caseEntity.name"></span>
-                <!-- <CaseStatus class="ml-8" :status="caseEntity.status" /> -->
+                <CaseStatus class="ml-8" :status="caseEntity.status" />
               </div>
             </v-col>
             <v-col cols="12" md="6" class="d-flex justify-md-end">
@@ -228,14 +228,14 @@
             </v-card-text>
           </v-card>
         </v-col>
-        <!-- <v-col cols="12" :md="activeNode ? 5 : 9" class="setup-column">
-          <div v-if="$config.debug" style="position: absolute; z-index: 1">
+        <v-col cols="12" :md="activeNode ? 5 : 9" class="setup-column">
+          <div v-if="config.debug" style="position: absolute; z-index: 1">
             <v-btn
               x-small
               outlined
               color="accent"
               @click="
-                showData = !showData
+                showData = !showData,
                 showErrors = false
               "
             >
@@ -246,7 +246,7 @@
               outlined
               color="error"
               @click="
-                showErrors = !showErrors
+                showErrors = !showErrors,
                 showData = false
               "
             >
@@ -254,16 +254,14 @@
             </v-btn>
           </div>
           <STLReader
-            v-if="files.length"
-            ref="STLReader"
             :class="{ 'd-none': showErrors || showData }"
             :files="files"
             :visible="visible"
             @screenshot="screenCapture"
             @error="handleError"
-          ></STLReader>
+          />
 
-          <screenshot-dialog />
+          <!-- <screenshot-dialog /> -->
 
           <div
             v-if="showData || showErrors"
@@ -285,7 +283,7 @@
               </v-alert>
             </template>
           </div>
-        </v-col> -->
+        </v-col>
         <!-- <v-col cols="12" :md="activeNode ? 4 : 0" class="setup-column">
           <JsonSchema
             v-if="activeNode"
@@ -879,29 +877,39 @@
 </template>
 
 <script setup lang="ts">
-// import JsonSchema from '@/components/JsonSchema/index'
-// import STLReader from '@/components/STLReader'
 import { useStore } from 'vuex'
 import RefParser from '@apidevtools/json-schema-ref-parser'
 import Ajv from 'ajv'
 import config from '../../../../../config'
+import STLReader from '~/components/STLReader.vue'
 // import ScreenshotDialog from '@/components/core/Screenshots/ScreenshotDialog'
 import useUser from '~/use/useUser'
+import useProject from '~/use/useProject'
+import useCase from '~/use/useCase'
+import { ICase, ICaseSetup, ICaseFile } from '~/interfaces/cases'
 import axios from 'axios'
 
 const router = useRouter()
 const store = useStore()
 const { canEdit } = useUser()
+const { fetchProject, project } = useProject()
+const {
+  fetchCase,
+  fetchCaseSetup,
+  fetchCaseFiles,
+  currentCase,
+  currentCaseSetup,
+  currentCaseFiles,
+} = useCase()
+
 const ajv = new Ajv({ allErrors: true })
 const accept = '.step,.stp'
 
-const STLReader = ref(null)
-
 const showTemplate = ref(false)
-const project = ref({})
-const caseSetup = ref({})
-const caseEntity = ref({})
-const files = ref([])
+
+const caseSetup = ref<ICaseSetup>(null)
+const caseEntity = ref<ICase>(null)
+const files = ref<ICaseFile[]>([])
 
 const params = defineProps({
   projectId: {
@@ -914,33 +922,29 @@ const params = defineProps({
 
 onMounted(async() => {
   try {
-    console.log(params)
-    const [
-      project1,
-      caseSetup1,
-      caseEntity1,
-      files1,
-      // rawSchema,
-    ] = await Promise.all([
-      axios.get(`${config.projectURL}/projects/${params.projectId}`),
-      axios.get(`${config.caseURL}/cases/setup/${params.caseId}`),
-      axios.get(`${config.caseURL}/cases/${params.caseId}`),
-      axios.get(`${config.fileserverURL}/cases/${params.caseId}/files`),
-      // $content('info.schema').fetch(),
-    ])
+    const requests: Promise<void>[] = [
+      fetchCaseSetup(params.caseId),
+      fetchCaseFiles(params.caseId),
+    ]
+    if (!project.value) {
+      requests.unshift(fetchProject(params.projectId))
+    }
+    if (!currentCase.value) {
+      requests.unshift(fetchCase(params.caseId))
+    }
 
-    project.value = project1.data
-    caseSetup.value = caseSetup1.data
-    caseEntity.value = caseEntity1.data
-    files.value = files1.data
+    await Promise.all(requests)
+
+    caseSetup.value = currentCaseSetup.value
+    caseEntity.value = currentCase.value
+    files.value = currentCaseFiles.value
 
     // const schema = await RefParser.dereference(rawSchema)
 
-    caseSetup.value.settings = caseSetup.settings || {}
-    caseSetup.value.regions = caseSetup.regions || {}
-    caseSetup.value.interfaces = caseSetup.interfaces || {}
+    caseSetup.value.settings = caseSetup.value.settings || {}
+    caseSetup.value.regions = caseSetup.value.regions || []
+    caseSetup.value.interfaces = caseSetup.value.interfaces || []
 
-    console.log(project.value)
     showTemplate.value = true
   } catch (e) {
     console.log(e)
@@ -1054,7 +1058,6 @@ const interfaces = computed(() => {
   )
 })
 const options = computed(() => {
-  console.log(caseEntity.value.status, canEdit.value)
   return {
     debug: config.debug,
     disableAll: caseEntity.value.status > 0 || canEdit.value,
@@ -1098,6 +1101,15 @@ const validateCase = async() => {
     validatting.value = false
   }
 }
+const handleServerError = (error) => {
+  const message
+    = error
+    && error.response
+    && error.response.data
+    && error.response.data.Message
+
+  store.commit('snackbar/error', { message })
+}
 const submit = async() => {
   try {
     submitting.value = true
@@ -1118,16 +1130,6 @@ const submit = async() => {
   } finally {
     submitting.value = false
   }
-}
-
-const handleServerError = (error) => {
-  const message
-    = error
-    && error.response
-    && error.response.data
-    && error.response.data.Message
-
-  store.commit('snackbar/error', { message })
 }
 const uploadCaseStepFile = async(caseId, file) => {
   // Get pre-signedURL
@@ -1622,7 +1624,7 @@ const deleteEntity = async() => {
 
     activeNode.value = null
     deleteDialog.value = false
-    STLReader.value && STLReader.value.resize()
+    // STLReader.value && STLReader.value.resize()
     // this.$refs.STLReader && this.$refs.STLReader.resize()
     // this.$nextTick(
     //   () => this.$refs.STLReader && this.$refs.STLReader.resize()
@@ -2107,7 +2109,7 @@ const toggleVisibility = (node) => {
 .region-column {
   flex: 1 0 auto;
   position: relative;
-  max-height: 100%;
+  height: 100vh;
 }
 .region-column .v-card {
   min-height: 50%;

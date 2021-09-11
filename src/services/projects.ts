@@ -9,7 +9,7 @@ const fetchAll = (axios, payload: { id: number; params: URLSearchParams }) => {
     .catch((e) => Promise.reject(e.response.data))
 }
 
-const fetchById = (axios, id: number) => {
+const fetchById = (axios, id: string|undefined) => {
   const url = `${config.projectURL}/projects/${id}`
   return axios
     .get(url)

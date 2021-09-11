@@ -6,6 +6,7 @@ import { organizationModule } from './organization'
 import { projectsModule } from './projects'
 import { termsModule } from './acceptTerms'
 import { snackbarModule } from './snackbar'
+import { casesModule } from './cases'
 
 export type RootState = {
   version: string
@@ -31,6 +32,7 @@ const store = createStore({
     projects: projectsModule,
     snackbar: snackbarModule,
     acceptTerms: termsModule,
+    cases: casesModule,
   },
 })
 

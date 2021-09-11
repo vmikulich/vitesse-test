@@ -18,6 +18,10 @@ const getters: GetterTree<ProjectState, RootState> = {
   projects(state) {
     return state.projects
   },
+
+  project(state) {
+    return state.project
+  },
 }
 
 const mutations: MutationTree<ProjectState> = {
