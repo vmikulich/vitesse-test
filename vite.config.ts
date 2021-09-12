@@ -19,6 +19,13 @@ export default defineConfig({
       '~/': `${path.resolve(__dirname, 'src')}/`,
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: '@import "~/styles/main.scss";',
+      },
+    },
+  },
   plugins: [
     Vue({
       include: [/\.vue$/, /\.md$/],

@@ -10,7 +10,7 @@
     <v-app-bar fixed flat app>
       <router-link to="/" class="ml-3">
         <v-img
-          src="./src/assets/logo.png"
+          src="http://localhost:3000/src/assets/logo.png"
           width="88"
           height="32"
           alt="Diabatix"
@@ -136,7 +136,9 @@
       </template>
     </v-app-bar>
     <v-main>
-      <v-btn @click="logout">Logout</v-btn>
+      <v-btn @click="logout">
+        Logout
+      </v-btn>
       <router-view />
     </v-main>
   </v-app>
@@ -149,6 +151,8 @@ import useOrganization from '~/use/useOrganization'
 import { USER_ROLES as userRoles } from '~/constants/index'
 
 const token = localStorage.getItem('auth._token.auth0')
+
+const router = useRouter()
 
 const {
   user,
@@ -166,7 +170,16 @@ const {
   fetchOrganizationProfile,
   setOrganization,
 } = useOrganization()
-const { isGranted, checkAuthentication, logout } = useAuth()
+const { isGranted, checkAuthentication, logout, login } = useAuth()
+
+router.beforeEach((to, from, next) => {
+  checkAuthentication(token).then(() => {
+    if (isGranted.value) {
+      return next()
+    }
+    login()
+  })
+})
 
 const acceptWindowStatus = ref<boolean>(false)
 const showTemplate = ref<boolean>(false)

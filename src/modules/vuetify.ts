@@ -7,18 +7,18 @@ import { UserModule } from '~/types'
 const appLightTheme: ThemeDefinition = {
   dark: false,
   colors: {
-    'background': '#FFFFFF',
-    'surface': '#FFFFFF',
-    'primary': '#6200EE',
-    'primary-darken-1': '#3700B3',
-    'secondary': '#03DAC6',
-    'secondary-darken-1': '#018786',
-    'error': '#B00020',
-    'info': '#2196F3',
-    'success': '#4CAF50',
-    'warning': '#FB8C00',
+    primary: '#0d2a5c',
+    accent: '#3d82f0',
+    // secondary: colors.blue.base,
+    // info: colors.teal.base,
+    warning: '#f4ae69',
+    error: '#f56a53',
+    success: '#00a978',
   },
-  variables: {},
+  icons: {
+    iconfont: 'mdiSvg',
+  },
+  variables: '~/styles/variables.scss',
 }
 
 export const install: UserModule = ({ app }) => {

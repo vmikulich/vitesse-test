@@ -254,6 +254,7 @@
             </v-btn>
           </div>
           <STLReader
+            v-if="files.length"
             :class="{ 'd-none': showErrors || showData }"
             :files="files"
             :visible="visible"
@@ -882,7 +883,7 @@ import RefParser from '@apidevtools/json-schema-ref-parser'
 import Ajv from 'ajv'
 import config from '../../../../../config'
 import STLReader from '~/components/STLReader.vue'
-// import ScreenshotDialog from '@/components/core/Screenshots/ScreenshotDialog'
+// import ScreenshotDialog from '~/components/Paraview/core/Screenshots/ScreenshotDialog/index.vue'
 import useUser from '~/use/useUser'
 import useProject from '~/use/useProject'
 import useCase from '~/use/useCase'

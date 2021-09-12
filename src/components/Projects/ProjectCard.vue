@@ -8,9 +8,9 @@
         :offset-y="true"
         :close-on-content-click="true"
       >
-        <template v-slot:activator="{ on, attr }">
+        <template #activator="{ on, attr }">
           <v-chip
-            class="font-weight-bold project-status text-capitalize"
+            class="font-weight-bold project-status text-capitalize text--secondary"
             :class="projectStatus"
             outlined
             small
@@ -45,7 +45,9 @@
           class="mr-4 rounded"
         ></v-img>
         <v-avatar v-else size="50" rounded class="mr-4">
-          <v-icon size="40"> mdi-image-off-outline </v-icon>
+          <v-icon size="40">
+            mdi-image-off-outline
+          </v-icon>
         </v-avatar>
         <div class="d-flex mr-12 pr-4">
           <p
@@ -117,26 +119,22 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle'])
 
-const toggleStatusButton = ref(false)
+const toggleStatusButton = ref<boolean>(false)
 
 const projectStatus = computed(() => projectStatuses[props.card.status])
 const isClosed = computed(() => projectStatus.value === 'closed')
 const statusButtonActionName = computed(() => isClosed.value ? 'Reopen' : 'Close')
 
-const caseFlexBasis = (count, total) => {
+const caseFlexBasis = (count: number, total: number): string => {
   return `${(count * 100) / total}%`
 }
 
-const toggleStatusButtonHandler = () => {
-  toggleStatusButton.value = !toggleStatusButton.value
-}
-
-const toggleStatus = (projectId) => {
-  emit('toggle', projectId, !this.isClosed)
+const toggleStatus = (projectId: number) => {
+  emit('toggle', projectId, !isClosed.value)
   toggleStatusButton.value = false
 }
 
-const caseWordForm = (casesCount) => {
+const caseWordForm = (casesCount: number) => {
   return casesCount === 1 ? ' case' : ' cases'
 }
 </script>

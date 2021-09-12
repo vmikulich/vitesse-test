@@ -185,11 +185,6 @@ watch(fullscreen, () => {
 onMounted(() => {
   initView()
   update()
-  console.log(actors)
-  console.log(renderer)
-  console.log(renderWindow)
-  console.log(interactorStyle)
-  console.log(orientationWidget)
 })
 
 onBeforeUnmount(() => {
@@ -272,7 +267,7 @@ const togglePan = () => {
 
   InteractionPresets.applyDefinitions(
     interactorStyleDefinitions,
-    interactorStyle,
+    interactorStyle.value,
   )
 }
 

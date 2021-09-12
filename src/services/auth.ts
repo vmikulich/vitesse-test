@@ -19,6 +19,7 @@ export default async() => {
     client_id: config.auth0ClientId,
     responce_type: 'code',
     redirect_uri: 'http://localhost:3000/auth',
+    useRefreshTokens: true,
   })
 
   const login = (): void => {
@@ -47,7 +48,7 @@ export default async() => {
       if (isAuth) {
         setDefaultAuthToken(token)
       } else {
-        authClient.logout()
+        authClient.loginWithRedirect()
       }
       return isAuth
     }
