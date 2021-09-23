@@ -1,0 +1,2301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Case Info Draft",
+  "description": "A first version on the validation rules after a case setup, displaying all the available options for regions, boundaries and general simulation settings. This version is NOT final.",
+  "type": "object",
+  "required": ["id", "casetype", "regions", "settings"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "Unique identifier for the case"
+    },
+    "casetype": {
+      "type": "string",
+      "description": "The case type",
+      "enum": ["simulation", "design"]
+    },
+    "regions": {
+      "description": "Array with all the regions, each of which has a uploaded STL/step file.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/regions/fluid" },
+          { "$ref": "#/definitions/regions/solid" }
+        ]
+      }
+    },
+    "step": {
+      "description": "URL to the case STEP",
+      "type": "string",
+      "format": "uri"
+    },
+    "interfaces": {
+      "description": "Array of interfaces defined between two regions",
+      "type": "array",
+      "items": {
+        "description": "Interface between two regions",
+        "type": "object",
+        "required": ["id", "r1", "r2", "interface"],
+        "properties": {
+          "id": {
+            "description": "Unique Id of the interface",
+            "type": "integer"
+          },
+          "r1": {
+            "description": "First region",
+            "$comment": "Id of one of the defined regions, validation should check that this region exists",
+            "type": "integer"
+          },
+          "r2": {
+            "description": "Second region",
+            "$comment": "Id of one of the defined regions, validation should check that this region exists",
+            "type": "integer"
+          },
+          "interface": {
+            "oneOf": [
+              { "$ref": "#/definitions/interfaces/thermalResistance" },
+              { "$ref": "#/definitions/interfaces/roughness" }
+            ]
+          }
+        }
+      }
+    },
+    "settings": {
+      "description": "General case settings",
+      "type": "object",
+      "properties": {
+        "meshing": {
+          "description": "Meshing properties",
+          "type": "object",
+          "required": ["resolution"],
+          "properties": {
+            "resolution": {
+              "description": "Meshing resolution preset",
+              "enum": [
+                "Conceptual_15",
+                "Detailed_100",
+                "Detailed_50",
+                "Detailed_15",
+                "Conceptual_100",
+                "Conceptual_85",
+                "Detailed_85"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "definitions": {
+    "regions": {
+      "fluid": {
+        "description": "A region defined as a fluid",
+        "type": "object",
+        "required": ["id", "name", "stl", "regionType", "physics"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+          "stl": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "step": {
+            "description": "URL to the uploaded STEP",
+            "type": "string",
+            "format": "uri"
+          },
+          "regionType": {
+            "type": "string",
+            "const": "fluid"
+          },
+          "physics": {
+            "description": "All physics related properties",
+            "type": "object",
+            "required": ["properties", "buoyancy", "turbulence", "radiation"],
+            "properties": {
+              "properties": {
+                "description": "A material with the properties for fluiddefinition",
+                "type": "object",
+                "required": ["id", "name", "rho", "mu", "Cp", "kappa"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": {
+                    "description": "Materialname",
+                    "type": "string"
+                  },
+                  "rho": { "$ref": "#/definitions/parameters/rho" },
+                  "mu": { "$ref": "#/definitions/parameters/mu" },
+                  "Cp": { "$ref": "#/definitions/parameters/Cp" },
+                  "kappa": { "$ref": "#/definitions/parameters/kappa" },
+                  "beta": { "$ref": "#/definitions/parameters/beta" }
+                },
+                "additionalProperties": false
+              },
+              "buoyancy": {
+                "description": "Buoyancy related settings",
+                "type": "object",
+                "required": ["buoyancy", "g"],
+                "properties": {
+                  "buoyancy": {
+                    "type": "string",
+                    "description": "Buoyancy",
+                    "enum": ["enabled", "disabled"],
+                    "default": "disabled"
+                  },
+                  "pref": { "$ref": "#/definitions/parameters/pref" },
+                  "Tref": { "$ref": "#/definitions/parameters/Tref" },
+                  "g": { "$ref": "#/definitions/parameters/g" }
+                }
+              },
+              "turbulence": {
+                "type": "string",
+                "description": "Turbulence model. Please refer to the documentation if you are not sure which one to select. The kOmegaSST model is suggested to take as a starting point.",
+                "enum": [
+                  "laminar",
+                  "kEpsilon",
+                  "RNGkEpsilon",
+                  "LaunderSharmaKE",
+                  "kOmega",
+                  "kOmegaSST"
+                ],
+                "default": "kOmegaSST"
+              },
+              "radiation": {
+                "description": "Radiation settings",
+                "type": "object",
+                "required": ["radiation"],
+                "properties": {
+                  "radiation": {
+                    "type": "string",
+                    "description": "Radiation",
+                    "enum": ["enabled", "disabled"],
+                    "default": "disabled"
+                  }
+                }
+              }
+            }
+          },
+          "sources": {
+            "description": "",
+            "type": "object",
+            "properties": {
+              "power": { "$ref": "#/definitions/sources/power" }
+            },
+            "additionalProperties": false
+          },
+          "boundaries": {
+            "description": "Array with all the boundaries, each of which has a uploaded STL file.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/boundaries/fluid/fixedTemperatureWall"
+                },
+                { "$ref": "#/definitions/boundaries/fluid/heatedWall" },
+                { "$ref": "#/definitions/boundaries/fluid/externalWall" },
+                { "$ref": "#/definitions/boundaries/fluid/insulatedWall" },
+                { "$ref": "#/definitions/boundaries/fluid/fixedFlowRateInlet" },
+                { "$ref": "#/definitions/boundaries/fluid/pressureInlet" },
+                { "$ref": "#/definitions/boundaries/fluid/pumpInlet" },
+                { "$ref": "#/definitions/boundaries/fluid/fanInlet" },
+                { "$ref": "#/definitions/boundaries/fluid/pressureOutlet" },
+                { "$ref": "#/definitions/boundaries/fluid/fanOutlet" },
+                { "$ref": "#/definitions/boundaries/fluid/pumpOutlet" }
+              ]
+            }
+          },
+          "subregions": {
+            "description": "Array with subregions, each of which has a uploaded STL file.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/definitions/subregions/general" },
+                { "$ref": "#/definitions/subregions/design" }
+              ]
+            }
+          },
+          "optimizations": {
+            "description": "Define your target.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/optimizations/objectives/powerDissipationMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/powerDissipation"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "solid": {
+        "description": "A region defined as a solid",
+        "type": "object",
+        "required": ["id", "name", "stl", "regionType", "physics"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+          "stl": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "step": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "regionType": {
+            "type": "string",
+            "const": "solid"
+          },
+          "physics": {
+            "description": "All physics related properties",
+            "type": "object",
+            "required": ["properties"],
+            "properties": {
+              "properties": {
+                "description": "A material with the properties for solid definition",
+                "type": "object",
+                "required": ["id", "name", "rho", "Cp", "kappa"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": {
+                    "description": "Materialname",
+                    "type": "string"
+                  },
+                  "rho": { "$ref": "#/definitions/parameters/rho" },
+                  "Cp": { "$ref": "#/definitions/parameters/Cp" },
+                  "kappa": { "$ref": "#/definitions/parameters/kappa" },
+                  "absorption": {
+                    "$ref": "#/definitions/parameters/absorption"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "radiation": {
+                "description": "Radiation settings",
+                "type": "object",
+                "required": ["radiation"],
+                "properties": {
+                  "radiation": {
+                    "type": "string",
+                    "description": "Radiation",
+                    "enum": ["enabled", "disabled"],
+                    "default": "disabled"
+                  }
+                }
+              }
+            }
+          },
+          "sources": {
+            "description": "",
+            "type": "object",
+            "properties": {
+              "power": { "$ref": "#/definitions/sources/power" }
+            },
+            "additionalProperties": false
+          },
+          "boundaries": {
+            "description": "Array with all the boundaries, each of which has a uploaded STL file.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/boundaries/solid/fixedTemperatureWall"
+                },
+                { "$ref": "#/definitions/boundaries/solid/heatedWall" },
+                { "$ref": "#/definitions/boundaries/solid/externalWall" }
+              ]
+            }
+          },
+          "subregions": {
+            "description": "Array with subregions, each of which has a uploaded STL file.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/definitions/subregions/general" },
+                { "$ref": "#/definitions/subregions/design" }
+              ]
+            }
+          },
+          "optimizations": {
+            "description": "Define your target.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumHeatingTime"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "subregions": {
+      "general": {
+        "description": "A subregion defined as a part in a region",
+        "type": "object",
+        "required": ["id", "name", "stl", "subregionType"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+          "stl": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "step": {
+            "description": "URL to the uploaded STEP",
+            "type": "string",
+            "format": "uri"
+          },
+          "subregionType": {
+            "type": "string",
+            "const": "general"
+          },
+          "sources": {
+            "description": "",
+            "type": "object",
+            "properties": {
+              "power": { "$ref": "#/definitions/sources/power" }
+            },
+            "additionalProperties": false
+          },
+          "optimizations": {
+            "description": "Define your target.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "design": {
+        "description": "A region defined as design",
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "stl",
+          "subregionType",
+          "physics",
+          "manufacturing"
+        ],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+          "stl": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "step": {
+            "description": "URL to uploaded STL",
+            "type": "string",
+            "format": "uri"
+          },
+          "subregionType": {
+            "type": "string",
+            "const": "design"
+          },
+          "sources": {
+            "description": "",
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "physics": {
+            "description": "All physics related properties",
+            "type": "object",
+            "required": ["properties"],
+            "properties": {
+              "properties": {
+                "description": "A material with the properties for design definition",
+                "type": "object",
+                "required": ["id", "name", "rho", "Cp", "kappa"],
+                "properties": {
+                  "id": { "type": "integer" },
+                  "name": {
+                    "description": "Materialname",
+                    "type": "string"
+                  },
+                  "rho": { "$ref": "#/definitions/parameters/rho" },
+                  "Cp": { "$ref": "#/definitions/parameters/Cp" },
+                  "kappa": { "$ref": "#/definitions/parameters/kappa" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "manufacturing": {
+            "oneOf": [
+              { "$ref": "#/definitions/manufacturing/cnc" },
+              { "$ref": "#/definitions/manufacturing/3dPrinting" },
+              { "$ref": "#/definitions/manufacturing/dieCasting" },
+              { "$ref": "#/definitions/manufacturing/sheetMetal" }
+            ]
+          },
+          "optimizations": {
+            "description": "Define your target.",
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/optimizations/objectives/relativeVolumeMaximization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/relativeVolumeMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/objectives/electricWirePowerMinimization"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumRelativeVolume"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/minimumRelativeVolume"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                },
+                {
+                  "$ref": "#/definitions/optimizations/constraints/maximumElectricWirePower"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "boundaries": {
+      "general": {},
+      "fluid": {
+        "fixedTemperatureWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "fixedTemperatureWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["T"],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "Rl": { "$ref": "#/definitions/parameters/Rl" },
+                "Rd": { "$ref": "#/definitions/parameters/Rd" },
+                "Rk": { "$ref": "#/definitions/parameters/Rk" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "heatedWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "heatedWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["Q"],
+              "properties": {
+                "Q": {
+                  "$ref": "#/definitions/parameters/Q",
+                  "default": 0
+                },
+                "Rd": { "$ref": "#/definitions/parameters/Rd" },
+                "Rk": { "$ref": "#/definitions/parameters/Rk" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "externalWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "externalWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["h", "Ta"],
+              "properties": {
+                "h": { "$ref": "#/definitions/parameters/h" },
+                "Ta": { "$ref": "#/definitions/parameters/Ta" },
+                "Rl": { "$ref": "#/definitions/parameters/Rl" },
+                "Rd": { "$ref": "#/definitions/parameters/Rd" },
+                "Rk": { "$ref": "#/definitions/parameters/Rk" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                },
+                "externalEmissivity": {
+                  "$ref": "#/definitions/parameters/epsilon_ext"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "insulatedWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "insulatedWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["Rl"],
+              "properties": {
+                "Rl": { "$ref": "#/definitions/parameters/Rl" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "fixedFlowRateInlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "fixedFlowRateInlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "oneOf": [
+                { "required": ["T", "U"] },
+                { "required": ["T", "m-dot"] },
+                { "required": ["T", "Q-dot"] }
+              ],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "U": { "$ref": "#/definitions/parameters/U" },
+                "m-dot": { "$ref": "#/definitions/parameters/m-dot" },
+                "Q-dot": { "$ref": "#/definitions/parameters/Q-dot" },
+                "omega": { "$ref": "#/definitions/parameters/omega" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/pressureLossMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/pressureLoss"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pressureInlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "pressureInlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["T", "p"],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "p": { "$ref": "#/definitions/parameters/p" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pumpInlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "pumpInlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["T", "performanceCurve"],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "flow": { "$ref": "#/definitions/parameters/flow" },
+                "pressure": { "$ref": "#/definitions/parameters/pressure" },
+                "performanceCurve": {
+                  "$ref": "#/definitions/parameters/performanceCurve"
+                },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/pressureLossMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/pressureLoss"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "fanInlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "fanInlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["T", "performanceCurve"],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "speed": { "$ref": "#/definitions/parameters/speed" },
+                "flow": { "$ref": "#/definitions/parameters/flow" },
+                "pressure": { "$ref": "#/definitions/parameters/pressure" },
+                "performanceCurve": {
+                  "$ref": "#/definitions/parameters/performanceCurve"
+                },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/pressureLossMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/pressureLoss"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pressureOutlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "pressureOutlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "properties": {
+                "p": { "$ref": "#/definitions/parameters/p" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "fanOutlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "fanOutlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["performanceCurve"],
+              "properties": {
+                "speed": { "$ref": "#/definitions/parameters/speed" },
+                "flow": { "$ref": "#/definitions/parameters/flow" },
+                "pressure": { "$ref": "#/definitions/parameters/pressure" },
+                "performanceCurve": {
+                  "$ref": "#/definitions/parameters/performanceCurve"
+                },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/pressureLossMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/pressureLoss"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "pumpOutlet": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "pumpOutlet"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["performanceCurve"],
+              "properties": {
+                "flow": { "$ref": "#/definitions/parameters/flow" },
+                "pressure": { "$ref": "#/definitions/parameters/pressure" },
+                "performanceCurve": {
+                  "$ref": "#/definitions/parameters/performanceCurve"
+                },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 1
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/pressureLossMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/pressureLoss"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "solid": {
+        "fixedTemperatureWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "fixedTemperatureWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["T"],
+              "properties": {
+                "T": { "$ref": "#/definitions/parameters/T" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "heatedWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "heatedWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["Q"],
+              "properties": {
+                "Q": {
+                  "$ref": "#/definitions/parameters/Q",
+                  "default": 0
+                },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "externalWall": {
+          "description": "",
+          "type": "object",
+          "required": ["id", "name", "stl", "boundaryType", "properties"],
+          "properties": {
+            "id": { "type": "integer" },
+            "name": { "type": "string", "pattern": "^[a-zA-Z0-9_\\s]+$" },
+            "stl": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "step": {
+              "description": "URL to uploaded STL",
+              "type": "string",
+              "format": "uri"
+            },
+            "boundaryType": {
+              "type": "string",
+              "const": "externalWall"
+            },
+            "properties": {
+              "description": "Physical properties",
+              "type": "object",
+              "required": ["h", "Ta"],
+              "properties": {
+                "h": { "$ref": "#/definitions/parameters/h" },
+                "Ta": { "$ref": "#/definitions/parameters/Ta" },
+                "Rd": { "$ref": "#/definitions/parameters/Rd" },
+                "Rk": { "$ref": "#/definitions/parameters/Rk" },
+                "emissivity": {
+                  "$ref": "#/definitions/parameters/epsilon",
+                  "default": 0.9
+                },
+                "absorptivity": {
+                  "$ref": "#/definitions/parameters/alpha"
+                },
+                "externalEmissivity": {
+                  "$ref": "#/definitions/parameters/epsilon_ext"
+                }
+              }
+            },
+            "optimizations": {
+              "description": "Define your target.",
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureSpreadMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/objectives/temperatureVarianceMinimization"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/meanTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/maximumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/minimumTemperature"
+                  },
+                  {
+                    "$ref": "#/definitions/optimizations/constraints/temperatureVariance"
+                  }
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "sources": {
+      "power": {
+        "description": "Power",
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": ["Q"],
+            "properties": {
+              "Q": {
+                "$ref": "#/definitions/parameters/Q",
+                "default": 0
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "parameters": {
+      "Q": {
+        "description": "Heating power [W]",
+        "type": "number"
+      },
+      "q": {
+        "description": "Heat flux [W/m²]",
+        "type": "number"
+      },
+      "Pd": {
+        "description": "Power dissipation [W]",
+        "type": "number",
+        "minimum": 0
+      },
+      "T": {
+        "description": "Temperature [K]",
+        "type": "number",
+        "minimum": 200
+      },
+      "Tref": {
+        "description": "Reference temperature [K]",
+        "type": "number",
+        "minimum": 200,
+        "default": 293.15
+      },
+      "sigma_T^2": {
+        "description": "Temperature variance [K²]",
+        "type": "number",
+        "minimum": 0
+      },
+      "rho": {
+        "description": "Density rho [kg/m³]",
+        "$ref": "#/definitions/inputoptions",
+        "exclusiveMinimum": 0
+      },
+      "mu": {
+        "description": "Dynamic Viscosity [Pa⋅s]",
+        "$ref": "#/definitions/inputoptions",
+        "minimum": 0
+      },
+      "Cp": {
+        "description": "Specific Heat [J/(K⋅kg)]",
+        "$ref": "#/definitions/inputoptions",
+        "minimum": 0
+      },
+      "kappa": {
+        "description": "Thermal conductivity [W/(m⋅K)]",
+        "oneOf": [
+          {
+            "description": "Isotropic thermal conductivity [W/(m⋅K)]",
+            "$ref": "#/definitions/inputoptions",
+            "minimum": 0
+          },
+          {
+            "description": "Anisotropic thermal conductivity [W/(m⋅K)]",
+            "type": "object",
+            "required": ["kappaX", "kappaY", "kappaZ"],
+            "properties": {
+              "kappaX": {
+                "description": "Anisotropic thermal conductivity [W/(m⋅K)] along X-axis.",
+                "$ref": "#/definitions/inputoptions",
+                "minimum": 0
+              },
+              "kappaY": {
+                "description": "Anisotropic thermal conductivity [W/(m⋅K)] along Y-axis.",
+                "$ref": "#/definitions/inputoptions",
+                "minimum": 0
+              },
+              "kappaZ": {
+                "description": "Anisotropic thermal conductivity [W/(m⋅K)] along Z-axis.",
+                "$ref": "#/definitions/inputoptions",
+                "minimum": 0
+              }
+            }
+          }
+        ]
+      },
+      "Rl": {
+        "description": "Roughness length [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "Rd": {
+        "description": "Thickness of thermal resistance layer [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "Rk": {
+        "description": "Thermal conductivy of thermal resistance layer [W/(m⋅K)]",
+        "type": "number",
+        "minimum": 0
+      },
+      "Rth": {
+        "description": "Absolute thermal resistance [K/W]",
+        "type": "number",
+        "minimum": 0
+      },
+      "Uth": {
+        "description": "Total transmittance [W/(m²K)]",
+        "type": "number",
+        "minimum": 0
+      },
+      "h": {
+        "description": "Heat transfer coefficient [W/(m²⋅K)]",
+        "type": "number",
+        "minimum": 0,
+        "maximum": 10000
+      },
+      "U": {
+        "description": "Velocity [m/s]",
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1000
+      },
+      "m-dot": {
+        "description": "Mass flow rate [kg/s]",
+        "type": "number",
+        "minimum": 0
+      },
+      "Q-dot": {
+        "description": "Volumetric flow rate [m³/s]",
+        "type": "number",
+        "minimum": 0
+      },
+      "omega": {
+        "description": "Rotational velocity [rad/s]",
+        "type": "number"
+      },
+      "p": {
+        "description": "pressure [Pa]",
+        "type": "number"
+      },
+      "pref": {
+        "description": "reference pressure [Pa]",
+        "type": "number",
+        "default": 101325
+      },
+      "Ta": {
+        "description": "Ambient temperature [K]",
+        "type": "number",
+        "minimum": 200
+      },
+      "epsilon": {
+        "description": "Emissivity []",
+        "type": "number",
+        "default": 0.9,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "epsilon_ext": {
+        "description": "External emissivity []",
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "alpha": {
+        "description": "Absorptivity []",
+        "type": "number",
+        "default": 0.9,
+        "minimum": 0,
+        "maximum": 1
+      },
+      "performanceCurve": {
+        "description": "A list of X and Y coördinates to form a fan/pump performance curve",
+        "type": "object",
+        "required": ["id", "name", "performanceCurve"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "performanceCurve": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "description": "Volumentric flow rate [m³/s]",
+                  "type": "number"
+                },
+                {
+                  "description": "Pressure [Pa]",
+                  "type": "number"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "RfMin": {
+        "description": "Minimal feature size [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "RfMax": {
+        "description": "Maximal feature size [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "bRi": {
+        "description": "Inner bending radius [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "bRo": {
+        "description": "Outer bending radius [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "t": {
+        "description": "Sheet thickness [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "angle": {
+        "description": "Angle [°]",
+        "type": "number",
+        "minimum": 0
+      },
+      "delta": {
+        "description": "Design height [m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "orientation": {
+        "description": "Orientation vector []",
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 3,
+        "maxItems": 3
+      },
+      "weight": {
+        "description": "The weight of the target function. Change this value if you have multiple targets and you want to change the importance of this target. A value of 1 means that the target is the most important. A value of 0 means that the target is not important. []",
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "default": 1
+      },
+      "volumePercentage": {
+        "description": "Volume fraction []",
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "g": {
+        "description": "Gravitation vector",
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      },
+      "beta": {
+        "description": "Buoyancy beta [1/T]",
+        "$ref": "#/definitions/inputoptions"
+      },
+      "absorption": {
+        "description": "Absorption coefficient alpha [1/m]",
+        "type": "number",
+        "minimum": 0
+      },
+      "speed": {
+        "description": "The speed of the fan [rpm]",
+        "type": "number",
+        "minimum": 0
+      },
+      "flow": {
+        "description": "The airflow of the fan [m³/s]",
+        "type": "number",
+        "minimum": 0
+      },
+      "pressure": {
+        "description": "The dynamic pressure [Pa]",
+        "type": "number",
+        "minimum": 0
+      },
+      "time": {
+        "description": "Time [s]",
+        "type": "number",
+        "minimum": 0
+      },
+      "V": {
+        "description": "The supplied voltage [V]",
+        "type": "number",
+        "minimum": 0
+      },
+      "resistivity": {
+        "description": "The electrical resistivity [Ω⋅m]",
+        "type": "number",
+        "minimum": 0
+      }
+    },
+    "interfaces": {
+      "thermalResistance": {
+        "description": "",
+        "type": "object",
+        "required": ["interfaceType", "properties"],
+        "properties": {
+          "interfaceType": {
+            "type": "string",
+            "const": "thermalResistance"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "anyOf": [{ "required": ["Rd", "Rk"] }, { "required": ["Rth"] }],
+            "properties": {
+              "id": { "type": "integer" },
+              "name": { "type": "string" },
+              "Rd": { "$ref": "#/definitions/parameters/Rd" },
+              "Rk": { "$ref": "#/definitions/parameters/Rk" },
+              "Rth": { "$ref": "#/definitions/parameters/Rth" }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "roughness": {
+        "description": "",
+        "type": "object",
+        "required": ["interfaceType", "properties"],
+        "properties": {
+          "interfaceType": {
+            "type": "string",
+            "const": "roughness"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": ["Rl"],
+            "properties": {
+              "Rl": { "$ref": "#/definitions/parameters/Rl" }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "manufacturing": {
+      "cnc": {
+        "description": "",
+        "type": "object",
+        "required": ["id", "name", "manufacturingType", "properties"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "manufacturingType": {
+            "type": "string",
+            "const": "CNC"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": ["RfMin", "delta", "orientation"],
+            "properties": {
+              "RfMin": { "$ref": "#/definitions/parameters/RfMin" },
+              "delta": { "$ref": "#/definitions/parameters/delta" },
+              "orientation": { "$ref": "#/definitions/parameters/orientation" }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "3dPrinting": {
+        "description": "",
+        "type": "object",
+        "required": ["id", "name", "manufacturingType", "properties"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "manufacturingType": {
+            "type": "string",
+            "const": "3Dprinting"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": ["RfMin"],
+            "properties": {
+              "RfMin": { "$ref": "#/definitions/parameters/RfMin" }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "dieCasting": {
+        "description": "",
+        "type": "object",
+        "required": ["id", "name", "manufacturingType", "properties"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "manufacturingType": {
+            "type": "string",
+            "const": "Die Casting"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": [
+              "RfMin",
+              "RfMax",
+              "bRi",
+              "bRo",
+              "angle",
+              "delta",
+              "orientation"
+            ],
+            "properties": {
+              "RfMin": { "$ref": "#/definitions/parameters/RfMin" },
+              "RfMax": { "$ref": "#/definitions/parameters/RfMax" },
+              "bRi": { "$ref": "#/definitions/parameters/bRi" },
+              "bRo": { "$ref": "#/definitions/parameters/bRo" },
+              "angle": { "$ref": "#/definitions/parameters/angle" },
+              "delta": { "$ref": "#/definitions/parameters/delta" },
+              "orientation": { "$ref": "#/definitions/parameters/orientation" }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "sheetMetal": {
+        "description": "",
+        "type": "object",
+        "required": ["id", "name", "manufacturingType", "properties"],
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "manufacturingType": {
+            "type": "string",
+            "const": "Sheet Metal"
+          },
+          "properties": {
+            "description": "Physical properties",
+            "type": "object",
+            "required": [
+              "RfMin",
+              "RfMax",
+              "bRi",
+              "bRo",
+              "t",
+              "angle",
+              "delta",
+              "orientation"
+            ],
+            "properties": {
+              "RfMin": { "$ref": "#/definitions/parameters/RfMin" },
+              "RfMax": { "$ref": "#/definitions/parameters/RfMax" },
+              "bRi": { "$ref": "#/definitions/parameters/bRi" },
+              "bRo": { "$ref": "#/definitions/parameters/bRo" },
+              "t": { "$ref": "#/definitions/parameters/t" },
+              "angle": { "$ref": "#/definitions/parameters/angle" },
+              "delta": { "$ref": "#/definitions/parameters/delta" },
+              "orientation": { "$ref": "#/definitions/parameters/orientation" }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "optimizations": {
+      "objectives": {
+        "powerDissipationMinimization": {
+          "description": "Power dissipation minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "powerDissipationMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "pressureLossMinimization": {
+          "description": "Pressure loss minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "pressureLossMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "relativeVolumeMaximization": {
+          "description": "Volume maximization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "relativeVolumeMaximization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "relativeVolumeMinimization": {
+          "description": "Volume minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "relativeVolumeMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "temperatureMinimization": {
+          "description": "Volume temperature minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "temperatureMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "temperatureSpreadMinimization": {
+          "description": "Volume temperature minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight", "target"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "temperatureSpreadMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/T" }
+          },
+          "additionalProperties": false
+        },
+        "temperatureVarianceMinimization": {
+          "description": "Volume temperature minimization",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "temperatureVarianceMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" }
+          },
+          "additionalProperties": false
+        },
+        "electricWirePowerMinimization": {
+          "description": "Apply heating by an electric wire in the design region, but minimize the heating power",
+          "type": "object",
+          "required": ["id", "optimizationType", "objectiveType", "weight", "voltage", "resistivity"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "objective"
+            },
+            "objectiveType": {
+              "type": "string",
+              "const": "electricWirePowerMinimization"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "voltage": { "$ref": "#/definitions/parameters/V" },
+            "resistivity": { "$ref": "#/definitions/parameters/resistivity" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "constraints": {
+        "powerDissipation": {
+          "description": "Maximum power dissipation constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "powerDissipation"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/p" }
+          },
+          "additionalProperties": false
+        },
+        "pressureLoss": {
+          "description": "Maximum pressure loss constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "pressureLoss"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/p" }
+          },
+          "additionalProperties": false
+        },
+        "maximumRelativeVolume": {
+          "description": "Maximum volume constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "maximumRelativeVolume"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/volumePercentage" }
+          },
+          "additionalProperties": false
+        },
+        "minimumRelativeVolume": {
+          "description": "Minimum volume constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "minimumRelativeVolume"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/volumePercentage" }
+          },
+          "additionalProperties": false
+        },
+        "meanTemperature": {
+          "description": "Mean temperature constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "meanTemperature"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/T" }
+          },
+          "additionalProperties": false
+        },
+        "maximumTemperature": {
+          "description": "Maximum temperature constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "maximumTemperature"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/T" }
+          },
+          "additionalProperties": false
+        },
+        "minimumTemperature": {
+          "description": "Minimum temperature constraint",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "minimumTemperature"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/T" }
+          },
+          "additionalProperties": false
+        },
+        "temperatureVariance": {
+          "description": "Temperature variance constraint",
+          "type": "object",
+          "required": ["id", "optimizationType", "constraintType", "weight"],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "temperatureVariance"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/sigma_T^2" }
+          },
+          "additionalProperties": false
+        },
+        "maximumElectricWirePower": {
+          "description": "Maximum electric power through an electric wire",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target",
+            "voltage",
+            "resistivity"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "maximumElectricWirePower"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/Pd" },
+            "voltage": { "$ref": "#/definitions/parameters/V" },
+            "resistivity": { "$ref": "#/definitions/parameters/resistivity" }
+          },
+          "additionalProperties": false
+        },
+        "maximumHeatingTime": {
+          "description": "Maximum time to heat up",
+          "type": "object",
+          "required": [
+            "id",
+            "optimizationType",
+            "constraintType",
+            "weight",
+            "target",
+            "Tinitial",
+            "Ttarget"
+          ],
+          "properties": {
+            "id": { "type": "integer" },
+            "optimizationType": {
+              "type": "string",
+              "const": "constraint"
+            },
+            "constraintType": {
+              "type": "string",
+              "const": "maximumHeatingTime"
+            },
+            "weight": { "$ref": "#/definitions/parameters/weight" },
+            "target": { "$ref": "#/definitions/parameters/time" },
+            "Tinitial": { "$ref": "#/definitions/parameters/T" },
+            "Ttarget": { "$ref": "#/definitions/parameters/T" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "inputoptions": {
+      "description": "Three input options possible: (1) constant value, (2) polynomial values: array of max 8 elements, (3) tabulated values: A list of X and Y coördinates to form a curve. X-values is the temperature [K], Y-values is the parameter value",
+      "oneOf": [
+        {
+          "description": "Constant value",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        {
+          "description": "Polynomial input: Y = a + b.X + c.X^2 + d.X^3 + e.X^4 + f.X^5 + g.X^6 + h.X^7. Input is array with [a, b, c, d, e, f, g, h]",
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 8,
+          "minItems": 2
+        },
+        {
+          "description": "Tabulated input:  A list of X and Y coördinates to form a curve. X-values is the temperature [K], Y-values is the parameter value",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "description": "Temperature [K]",
+                "type": "number"
+              },
+              {
+                "description": "parameter value",
+                "type": "number"
+              }
+            ]
+          },
+          "minItems": 2
+        }
+      ]
+    }
+  }
+}

@@ -10,22 +10,19 @@ import { VitePWA } from 'vite-plugin-pwa'
 import Prism from 'markdown-it-prism'
 import LinkAttributes from 'markdown-it-link-attributes'
 import Vuetify from '@vuetify/vite-plugin'
+import vtkRules from '@kitware/vtk.js/Utilities/config/dependency.js'
 
+// const vtkRules = require('vtk.js/Utilities/config/dependency').webpack
 const markdownWrapperClasses = 'prose prose-sm m-auto text-left'
 
 export default defineConfig({
   resolve: {
     alias: {
       '~/': `${path.resolve(__dirname, 'src')}/`,
+      '@/config/ColorMaps.json': `${path.resolve(__dirname, 'vtk.js/Sources/Rendering/Core/ColorTransferFunction/ColorMaps.json')}/`,
     },
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: '@import "~/styles/main.scss";',
-      },
-    },
-  },
+
   plugins: [
     Vue({
       include: [/\.vue$/, /\.md$/],
@@ -136,9 +133,11 @@ export default defineConfig({
       'vue',
       'vue-router',
       '@vueuse/core',
+      ...vtkRules.webpack.core.rules,
     ],
     exclude: [
       'vue-demi',
+      ...vtkRules.webpack.core.rules,
     ],
   },
 })

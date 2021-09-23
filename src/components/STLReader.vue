@@ -116,10 +116,10 @@
 </template>
 
 <script setup lang="ts">
-import { newInstance as vtkActor } from 'vtk.js/Sources/Rendering/Core/Actor'
-import { newInstance as vtkMapper } from 'vtk.js/Sources/Rendering/Core/Mapper'
-import { newInstance as vtkSTLReader } from 'vtk.js/Sources/IO/Geometry/STLReader'
-import InteractionPresets from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator/Presets'
+import { newInstance as vtkActor } from '@kitware/vtk.js/Rendering/Core/Actor'
+import { newInstance as vtkMapper } from '@kitware/vtk.js/Rendering/Core/Mapper'
+import { newInstance as vtkSTLReader } from '@kitware/vtk.js/IO/Geometry/STLReader'
+import InteractionPresets from '@kitware/vtk.js/Interaction/Style/InteractorStyleManipulator/Presets'
 import {
   VIEW_ORIENTATIONS,
   ORIENTATION_LABELS as orientationLabels,
@@ -232,7 +232,6 @@ async function update() {
         resetCameraOnFirstRender.value = false
         resetCamera()
       }
-      renderWindow.value.render()
       renderLater()
     })
   } catch (error) {
@@ -271,7 +270,7 @@ const togglePan = () => {
   )
 }
 
-const handleEsc = (event) => {
+function handleEsc(event) {
   if (event.which === 27) {
     toggleFullscreen()
   }

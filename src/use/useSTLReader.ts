@@ -1,11 +1,11 @@
-import { newInstance as vtkGenericRenderWindow } from 'vtk.js/Sources/Rendering/Misc/GenericRenderWindow'
+import { newInstance as vtkGenericRenderWindow } from '@kitware/vtk.js/Rendering/Misc/GenericRenderWindow'
 import Constants, {
   newInstance as vtkOrientationMarkerWidget,
-} from 'vtk.js/Sources/Interaction/Widgets/OrientationMarkerWidget'
-import { newInstance as vtkAxesActor } from 'vtk.js/Sources/Rendering/Core/AxesActor'
-import { newInstance as vtkInteractorStyleManipulator } from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator'
-import InteractionPresets from 'vtk.js/Sources/Interaction/Style/InteractorStyleManipulator/Presets'
-import vtkMatrixBuilder from 'vtk.js/Sources/Common/Core/MatrixBuilder'
+} from '@kitware/vtk.js/Interaction/Widgets/OrientationMarkerWidget'
+import { newInstance as vtkAxesActor } from '@kitware/vtk.js/Rendering/Core/AxesActor'
+import { newInstance as vtkInteractorStyleManipulator } from '@kitware/vtk.js/Interaction/Style/InteractorStyleManipulator'
+import InteractionPresets from '@kitware/vtk.js/Interaction/Style/InteractorStyleManipulator/Presets'
+import vtkMatrixBuilder from '@kitware/vtk.js/Common/Core/MatrixBuilder'
 import {
   INTERACTOR_STYLE_DEFINITIOS as interactorStyleDefinitions,
   ROTATION_STEP,
